@@ -17,7 +17,7 @@ Este repositorio reúne herramientas, scripts y documentación para el análisis
 ### Referencias
 
 
-+ [[https://factorable.net/][The Million-key Question]]
++ [The Million-key Question](https://factorable.net/)
 + [[https://www.usenix.org/conference/usenixsecurity12/technical-sessions/presentation/lenstra][Biased RSA private keys: origin attribution of GCD-factorable keys]]
 + [[https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/heninger][Reaping and breaking keys at scale: when crypto meets big data]]
 + [[https://www.usenix.org/conference/usenixsecurity19/presentation/filardo][The mechanics of compromising low entropy RSA keys]]

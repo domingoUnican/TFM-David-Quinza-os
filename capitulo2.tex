@@ -1,0 +1,138 @@
+\chapter{Fundamentos teóricos}
+
+En este capítulo presentaremos los conceptos teóricos necesarios para comprender el problema abordado en este Trabajo de Fin de Máster. Dado que nuestro objetivo es estudiar la detección de factores compartidos en claves RSA extraídas de \textit{Certificate Transparency logs}, consideramos que los cuatro elementos fundamentales que es necesario introducir previamente son el funcionamiento general de RSA, el papel del máximo común divisor en este contexto, la importancia de la entropía durante la generación de claves y, por último, la utilidad de los \textit{CT logs} como fuente de datos para este tipo de análisis.
+\\
+\\
+No se pretende realizar aquí una exposición exhaustiva de toda la teoría criptográfica relacionada con la Web, sino presentar únicamente aquellos conceptos que resultarán necesarios para entender el desarrollo posterior del trabajo. De este modo, en los capítulos siguientes podremos centrarnos con más claridad en los trabajos previos, en la metodología empleada y en la implementación del algoritmo utilizado.
+\\
+\\
+
+\section{Fundamentos de RSA}
+
+RSA es uno de los algoritmos más conocidos de criptografía asimétrica y uno de los más influyentes en la historia de la seguridad informática \cite{rivest1978method}. A diferencia de la criptografía simétrica, donde emisor y receptor comparten la misma clave secreta, en criptografía asimétrica cada usuario dispone de un par de claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto.
+\\
+\\
+Este modelo permitió resolver uno de los grandes problemas de la criptografía clásica, que era el intercambio seguro de claves en entornos abiertos. Gracias a ello, hoy es posible establecer comunicaciones seguras, autenticar identidades y firmar digitalmente información sin necesidad de que las partes hayan compartido previamente un secreto común \cite{rivest1978method}.
+\\
+\\
+En el caso de RSA, la seguridad del sistema se basa en la dificultad de factorizar un número entero grande obtenido como producto de dos números primos también grandes. Si denotamos estos primos por \(p\) y \(q\), el módulo RSA se construye como
+
+\[
+N = p \cdot q
+\]
+
+A partir de estos valores se calcula también la función de Euler
+
+\[
+\varphi(N) = (p-1)(q-1)
+\]
+
+Después se elige un exponente público \(e\), coprimo con \(\varphi(N)\), y se calcula el exponente privado \(d\) como el inverso multiplicativo de \(e\) módulo \(\varphi(N)\), de manera que
+
+\[
+e \cdot d \equiv 1 \pmod{\varphi(N)}
+\]
+
+De este modo, la clave pública queda formada por el par \((N,e)\), mientras que la clave privada contiene la información necesaria para conocer \(d\), directamente o a través de la factorización del módulo. En una versión simplificada del esquema, el cifrado de un mensaje \(m\) se realiza mediante
+
+\[
+c \equiv m^e \pmod{N}
+\]
+
+y el descifrado mediante
+
+\[
+m \equiv c^d \pmod{N}
+\]
+
+La fortaleza de RSA se apoya, por tanto, en que multiplicar dos primos grandes es sencillo, mientras que recuperar esos primos a partir únicamente de \(N\) es un problema computacionalmente muy costoso en condiciones normales \cite{rivest1978method}. Por este motivo, RSA ha sido durante muchos años uno de los algoritmos más utilizados en certificados digitales y en infraestructuras de clave pública dentro de la Web.
+\\
+\\
+Sin embargo, esta seguridad práctica no depende únicamente de la dificultad general del problema de factorización. También depende de que los primos \(p\) y \(q\) se hayan generado correctamente, sean suficientemente grandes y, sobre todo, sean independientes de los utilizados por otras claves. Esta última idea será especialmente importante en este trabajo, ya que la presencia de factores compartidos entre módulos RSA supone una debilidad crítica que permite comprometer la seguridad del sistema sin necesidad de resolver el problema general de factorización.
+\\
+\\
+
+\section{Máximo común divisor y su relación con RSA}
+
+El máximo común divisor, o \textit{Greatest Common Divisor} (GCD), de dos enteros es el mayor número que divide exactamente a ambos. Se trata de un concepto básico de teoría de números, pero en el contexto de RSA adquiere una importancia especial, ya que permite detectar de manera muy eficiente si dos módulos comparten algún factor primo.
+\\
+\\
+Si consideramos dos módulos RSA distintos
+
+\[
+N_1 = p \cdot q_1
+\]
+
+y
+
+\[
+N_2 = p \cdot q_2,
+\]
+
+entonces ambos comparten el factor primo \(p\). En ese caso, basta calcular
+
+\[
+\gcd(N_1,N_2)=p
+\]
+
+para recuperar directamente ese factor común. Una vez conocido, la factorización de ambos módulos resulta inmediata y, con ello, también la reconstrucción de la información necesaria para comprometer las claves privadas asociadas. Por tanto, dos claves RSA que compartan un factor dejan de ser seguras de forma prácticamente instantánea.
+\\
+\\
+El interés del GCD en este trabajo no está solo en esta propiedad, sino también en que puede calcularse de forma muy eficiente mediante el algoritmo de Euclides. Este algoritmo se basa en una idea sencilla: el máximo común divisor de dos números no cambia si sustituimos el mayor por el resto de dividirlo entre el menor. Repitiendo este proceso de manera sucesiva se llega rápidamente a un resto cero, y el último resto no nulo es precisamente el máximo común divisor.
+\\
+\\
+De forma simplificada, si \(a>b\), el algoritmo aplica la relación
+
+\[
+\gcd(a,b)=\gcd(b,a \bmod b)
+\]
+
+hasta alcanzar el caso final en el que el resto es cero. La eficiencia de este procedimiento es una de las razones por las que los ataques basados en GCD son tan potentes cuando existen factores compartidos entre claves RSA.
+\\
+\\
+En el contexto de este TFM, el máximo común divisor desempeña un doble papel. Por un lado, constituye la herramienta matemática que permite explotar la debilidad cuando existen factores compartidos entre módulos RSA. Por otro, se convierte en la operación central de los algoritmos diseñados para detectar este problema a gran escala.
+\\
+\\
+
+\section{Entropía y generación de claves RSA}
+
+Aunque RSA es un esquema sólido desde el punto de vista matemático, su seguridad práctica depende de que la generación de claves se realice correctamente. En particular, para construir una clave RSA segura es necesario que los números primos \(p\) y \(q\) se generen de manera suficientemente aleatoria e independiente. Si esta condición no se cumple, pueden aparecer relaciones inesperadas entre distintas claves públicas, incluyendo la reutilización accidental de factores primos \cite{heninger2012mining,vage2022finding,pelofske2024efficient}.
+\\
+\\
+En este contexto, la entropía hace referencia al grado de imprevisibilidad disponible en el sistema para alimentar el proceso de generación aleatoria. En un entorno bien diseñado, esa entropía permite producir candidatos a primos que sean efectivamente impredecibles. Sin embargo, en sistemas reales esto no siempre ocurre. Tal y como señalan tanto la tesis de Våge como el artículo de Pelofske, una baja entropía durante la fase de generación de primos puede hacer que distintas claves RSA compartan factores, lo que compromete completamente su seguridad \cite{vage2022finding,pelofske2024efficient}.
+\\
+\\
+Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave \cite{pelofske2024efficient}. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque.
+\\
+\\
+La tesis en la que se apoya este trabajo subraya que, en condiciones ideales, la probabilidad de que dos claves RSA distintas reutilicen un mismo primo dentro del enorme espacio de posibles primos de tamaño criptográfico es prácticamente nula \cite{vage2022finding}. Por eso, cuando en la práctica aparecen factores compartidos entre módulos públicos, no estamos ante una simple casualidad matemática, sino ante una señal muy clara de que ha existido un fallo en el proceso de generación.
+\\
+\\
+Además, este problema no es meramente teórico. Trabajos previos ya mostraron que la baja entropía y otros errores de implementación podían dar lugar a claves públicas vulnerables en sistemas reales, incluyendo dispositivos conectados a Internet \cite{heninger2012mining}. La tesis de Våge retoma esta línea de investigación aplicándola al análisis de certificados publicados en \textit{CT logs}, mientras que el artículo de Pelofske plantea un algoritmo más eficiente precisamente para atacar este tipo de situaciones a gran escala \cite{vage2022finding,pelofske2024efficient}.
+\\
+\\
+Por tanto, la importancia de la entropía en este TFM es doble. Por un lado, explica el origen de la vulnerabilidad que queremos estudiar. Por otro, justifica por qué tiene sentido analizar grandes volúmenes de claves públicas reales en busca de factores compartidos. Si la generación de claves no se realiza siempre en condiciones ideales, entonces la auditoría empírica de la infraestructura criptográfica desplegada en Internet se convierte en una tarea especialmente relevante desde el punto de vista de la ciberseguridad.
+\\
+\\
+
+\section{Certificate Transparency logs}
+
+Para poder estudiar este problema en sistemas reales es necesario contar con una fuente amplia y accesible de claves públicas. En este trabajo esa fuente serán los \textit{Certificate Transparency logs}, o \textit{CT logs}, que almacenan certificados digitales emitidos para dominios y servicios de Internet.
+\\
+\\
+Antes de explicar su utilidad, conviene recordar brevemente qué papel desempeñan los certificados digitales en la Web. Un certificado digital es un documento electrónico, normalmente en formato X.509, que vincula una clave pública con una determinada identidad o dominio. Estos certificados son emitidos por autoridades certificadoras dentro de la infraestructura de clave pública, o \textit{Public Key Infrastructure} (PKI), y permiten que un navegador u otro cliente verifique que la clave pública presentada por un servidor pertenece realmente a la entidad con la que dice comunicarse.
+\\
+\\
+En la práctica, este mecanismo es uno de los pilares de protocolos como TLS, utilizados para proteger las comunicaciones mediante HTTPS. Cuando un usuario accede a una página web segura, el servidor presenta su certificado y, con él, la clave pública asociada. De este modo, los certificados digitales no solo hacen posible la autenticación de servidores, sino que también exponen públicamente una gran cantidad de claves que pueden ser analizadas con fines de auditoría criptográfica.
+\\
+\\
+En este contexto surge \textit{Certificate Transparency}, un marco diseñado para aportar mayor transparencia al ecosistema de certificación web. Su idea principal es que los certificados emitidos por las autoridades certificadoras queden registrados en logs públicos y verificables, de manera que su emisión pueda ser observada y supervisada por terceros. Esto dificulta que una autoridad certificadora emita certificados incorrectos o fraudulentos sin que nadie pueda detectarlo.
+\\
+\\
+Desde el punto de vista de nuestro trabajo, la importancia de \textit{Certificate Transparency} está en que estos logs contienen enormes volúmenes de certificados reales emitidos en Internet. Como los certificados incluyen las claves públicas de los servidores, los \textit{CT logs} se convierten en una base de datos muy valiosa para estudiar cómo se está desplegando realmente la criptografía en la Web y para realizar auditorías a gran escala sobre claves públicas RSA.
+\\
+\\
+La tesis \textit{Finding shared RSA factors in the Certificate Transparency logs} demostró precisamente el interés de este enfoque \cite{vage2022finding}. En ese trabajo se recopilaron más de 159 millones de claves RSA distintas de 2048 bits extraídas de \textit{CT logs}, lo que permitió detectar casos reales de factores compartidos y mostró que este tipo de análisis es viable sobre conjuntos masivos de certificados \cite{vage2022finding}. Al mismo tiempo, la propia tesis dejaba claro que todavía quedaba margen para ampliar este tipo de estudios sobre volúmenes aún mayores de datos.
+\\
+\\
+Esto conecta de forma directa con la línea de trabajo seguida en este TFM. Gracias a los \textit{CT logs} es posible pasar de un análisis puramente teórico sobre debilidades de RSA a una auditoría empírica sobre claves públicas realmente desplegadas en Internet. Como veremos en el capítulo siguiente, esta posibilidad ha dado lugar a trabajos previos muy relevantes y justifica la necesidad de seguir buscando métodos más eficientes para detectar factores compartidos a gran escala.

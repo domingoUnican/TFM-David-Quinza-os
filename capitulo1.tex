@@ -1,129 +1,33 @@
-% -------------------------------------------------------------------
-% INTRODUCCIÓN Y OBJETIVOS
-% -------------------------------------------------------------------
+\chapter{Introducción}
 
-\chapter*{Introducción}
-
-El algoritmo RSA es uno de los sistemas criptográficos asimétricos más exitosos y utilizados para el intercambio seguro de información. Su seguridad radica en la dificultad computacional de factorizar números enteros muy grandes. Sin embargo, existen fallos de implementación críticos, concretamente en la etapa de generación de números primos debido a una baja entropía en los generadores de números aleatorios (PRNG). Esto provoca que diferentes claves RSA compartan factores primos, lo que permite que un atacante recupere la clave privada de forma muy eficiente calculando el Máximo Común Divisor (GCD) entre los módulos públicos \cite{pelofske2023, vage2022}.
-
-Para evaluar esta vulnerabilidad a gran escala en el mundo real, los investigadores utilizan los registros de \textit{Certificate Transparency} (CT logs), una iniciativa que almacena miles de millones de certificados TLS. Estudios recientes, como el de Våge \cite{vage2022}, analizaron más de 159 millones de claves RSA obtenidas de estos registros utilizando un algoritmo llamado \textit{Batch GCD}, logrando factorizar 355 claves vulnerables. Sin embargo, el principal problema es que el enfoque clásico de este algoritmo (conocido como \textit{Remainder Tree Batch GCD}) tiene un coste computacional masivo: el procesamiento de estas claves requirió 88 horas en 30 núcleos, consumiendo hasta 180 GB de RAM y 1 TB de disco duro.
-
-Este Trabajo de Fin de Máster propone aplicar un descubrimiento reciente documentado por Pelofske \cite{pelofske2023}: un novedoso algoritmo llamado \textit{Binary Tree Batch GCD}. Este algoritmo elimina la necesidad de calcular el costoso árbol de residuos, logrando teóricamente una aceleración de aproximadamente 6 veces respecto al método tradicional. El objetivo de este trabajo es implementar este nuevo enfoque para analizar claves de los CT logs, demostrando que es posible realizar auditorías de seguridad a gran escala de manera mucho más eficiente.
-
-\section*{Objetivos}
-
-\textbf{Objetivo General:}
-\begin{itemize}
-    \item Mejorar la eficiencia del análisis de vulnerabilidades por factores compartidos en claves RSA públicas provenientes de registros de \textit{Certificate Transparency}, mediante la implementación y evaluación del algoritmo \textit{Binary Tree Batch GCD}.
-\end{itemize}
-
-\textbf{Objetivos Específicos:}
-\begin{enumerate}
-    \item \textbf{Estudio del estado del arte:} Analizar el funcionamiento del criptosistema RSA, la importancia de la entropía en la generación de claves y la vulnerabilidad explotable mediante operaciones GCD.
-    \item \textbf{Análisis algorítmico:} Comparar teóricamente el algoritmo tradicional \textit{Remainder Tree Batch GCD} con la nueva propuesta \textit{Binary Tree Batch GCD}, destacando las mejoras en la complejidad espacial y temporal.
-    \item \textbf{Implementación:} Desarrollar el algoritmo \textit{Binary Tree Batch GCD} optimizado para manejar enteros gigantes.
-    \item \textbf{Experimentación y Benchmarking:} Recopilar un dataset de claves RSA de los CT logs y comparar el rendimiento (tiempo de CPU y uso de memoria) de la nueva implementación frente a los datos históricos.
-\end{enumerate}
-
-% -------------------------------------------------------------------
-% CAPÍTULO 1
-% -------------------------------------------------------------------
-
-\chapter{Introducción a la Criptografía y Seguridad}
-
-\section{Evolución Histórica de la Criptografía}
-La criptografía se ha utilizado desde la época del Imperio Romano para ocultar mensajes, siendo históricamente una herramienta vinculada a gobiernos y ejércitos. Métodos clásicos como el cifrado César (que desplazaba el alfabeto $k$ posiciones) sentaron las bases de la confidencialidad. Durante la Segunda Guerra Mundial, sistemas mecánicos como la máquina Enigma llevaron la criptografía a un nuevo nivel, pero seguían basándose en el mismo principio fundamental: ambas partes debían compartir la misma clave secreta. 
-
-Este requisito de compartir la clave es el gran inconveniente de la \textbf{criptografía simétrica}, ya que genera un problema logístico masivo de distribución de claves cuando la red de usuarios crece. Para solucionar esto, en la década de 1970 se descubrió la \textbf{criptografía asimétrica}, que utiliza dos claves distintas: una pública para cifrar y una privada para descifrar. Conociendo solo la clave pública, es prácticamente imposible deducir la clave privada.
-
-\section{Objetivos de la Seguridad de la Información}
-En el entorno digital actual, la criptografía no solo oculta información, sino que garantiza varios objetivos de seguridad fundamentales:
-\begin{itemize}
-    \item \textbf{Confidencialidad:} Mantener la información en secreto ante terceros (logrado mediante cifrado simétrico o asimétrico).
-    \item \textbf{Integridad:} Garantizar que el contenido de un mensaje no ha sido alterado en tránsito. Se logra mediante firmas digitales o Códigos de Autenticación de Mensajes (MAC).
-    \item \textbf{Autenticación:} Verificar la identidad de una entidad, un paso inicial crucial en cualquier comunicación segura.
-    \item \textbf{No repudio:} Imposibilidad de que el emisor de un mensaje niegue haberlo enviado, algo que se consigue de forma robusta con firmas digitales.
-\end{itemize}
-
-% -------------------------------------------------------------------
-% CAPÍTULO 2
-% -------------------------------------------------------------------
-
-\chapter{Infraestructura de Clave Pública y Certificados}
-
-\section{El ataque Man-in-the-Middle (MitM)}
-El gran talón de Aquiles de la criptografía de clave pública es la distribución inicial de dichas claves. Si dos usuarios intercambian claves públicas, un atacante que controle el canal de comunicación puede interceptarlas y sustituirlas por las suyas propias. En este escenario de \textit{Man-in-the-Middle}, las víctimas creen estar comunicándose de forma segura, pero el atacante está descifrando, leyendo y volviendo a cifrar todo el tráfico. Para evitar esto, es necesario vincular criptográficamente la identidad de una persona o servidor con su clave pública.
-
-\section{Certificados X.509}
-Un certificado de clave pública es esencialmente una clave pública unida a información única sobre la identidad de su propietario (como un nombre de dominio) y firmada digitalmente. El estándar más utilizado es el X.509 versión 3, que incluye campos críticos como el número de serie, el identificador del algoritmo de firma, el nombre del emisor, el periodo de validez y la información de la clave pública del sujeto.
-
-\section{Autoridades Certificadoras y Certificate Transparency (CT Logs)}
-Para que un certificado sea confiable, debe estar firmado por un tercero de confianza llamado Autoridad Certificadora (CA). Estas CAs forman una cadena de confianza jerárquica que los navegadores web validan (Web PKI). 
-
-Sin embargo, este modelo tiene fallos. Si una CA es comprometida, se pueden emitir certificados fraudulentos válidos para cualquier dominio. Para solucionar la falta de visibilidad de estos problemas, se inició el proyecto \textit{Certificate Transparency} (CT Logs). Esta iniciativa obliga a las CAs a subir todos los certificados emitidos a registros públicos de solo lectura y adición. Hoy en día, estos registros contienen miles de millones de certificados y son la fuente de datos principal para auditar la seguridad criptográfica a escala global \cite{vage2022}.
-
-% -------------------------------------------------------------------
-% CAPÍTULO 3
-% -------------------------------------------------------------------
-
-\chapter{El Criptosistema RSA y el Problema de la Factorización}
-
-\section{Fundamentos Matemáticos del Criptosistema RSA}
-El algoritmo RSA, presentado en 1978 por Rivest, Shamir y Adleman, es el primer esquema práctico de cifrado y firma digital de clave pública. Su seguridad inherente no se basa en la ofuscación del algoritmo, sino en la intratabilidad de un problema matemático clásico: la factorización de números enteros gigantes.
-
-La generación de un par de claves RSA (pública y privada) sigue un procedimiento algebraico estricto:
-
-\begin{enumerate}
-    \item \textbf{Generación de factores primos:} Se eligen de forma aleatoria dos números primos distintos y de tamaño similar, denominados $p$ y $q$.
-    \item \textbf{Cálculo del módulo:} Se calcula el producto de ambos primos para formar el módulo público $n$:
-    \begin{equation}
-        n = p \cdot q
-    \end{equation}
-    \item \textbf{Cálculo de la función indicatriz de Euler:} Esta función, denotada como $\phi(n)$, determina cuántos enteros menores que $n$ son coprimos con $n$:
-    \begin{equation}
-        \phi(n) = (p-1)(q-1)
-    \end{equation}
-    \item \textbf{Elección del exponente público:} Se selecciona un exponente de cifrado $e$ de manera que sea coprimo con $\phi(n)$. Típicamente se elige $e = 65537$.
-    \item \textbf{Cálculo del exponente privado:} Se calcula el exponente de descifrado $d$, que es el inverso multiplicativo modular de $e$ módulo $\phi(n)$:
-    \begin{equation}
-        d \equiv e^{-1} \pmod{\phi(n)}
-    \end{equation}
-\end{enumerate}
-
-Lo que establece la siguiente relación fundamental para el funcionamiento del sistema:
-\begin{equation}
-    e \cdot d \equiv 1 \pmod{\phi(n)}
-\end{equation}
-
-Una vez completado este proceso, la clave pública queda definida por el par $(n, e)$, mientras que la clave privada es el conjunto $(p, q, d)$. Cuando un usuario desea enviar un mensaje confidencial $m$ al propietario de la clave, el texto cifrado $c$ se genera mediante:
-\begin{equation}
-    c \equiv m^e \pmod{n}
-\end{equation}
-
-Para recuperar el texto original $m$, el receptor utiliza su exponente privado $d$:
-\begin{equation}
-    m \equiv c^d \pmod{n}
-\end{equation}
-
-La demostración de que este descifrado es correcto radica en la relación construida previamente:
-\begin{equation}
-    (m^e)^d \equiv m^{e \cdot d} \equiv m \pmod{n}
-\end{equation}
-
-\section{La Magnitud del Espacio de Búsqueda y la Seguridad}
-Si un atacante lograra factorizar el módulo público $n$ de 2048 bits y obtener los primos originales $p$ y $q$, el RSA quedaría completamente roto. Para evitar ataques de fuerza bruta, los estándares actuales exigen que los factores $p$ y $q$ tengan una longitud mínima de 1024 bits (un número decimal de unos 308 dígitos).
-
-Utilizando el teorema de los números primos, la cantidad aproximada de primos hasta un valor $x$ es $x/\ln(x)$. La cantidad de primos de 1024 bits disponibles es astronómica (un número de unos 305 dígitos). Por lo tanto, la probabilidad estadística de que dos ordenadores en el mundo elijan accidentalmente el mismo número primo es matemáticamente nula en condiciones ideales.
-
-\section{Entropía y la Vulnerabilidad del Factor Compartido}
-La inviolabilidad estadística descrita se sustenta sobre un pilar fundamental: los números primos $p$ y $q$ deben ser seleccionados de forma puramente aleatoria mediante un Generador de Números Pseudoaleatorios (PRNG). Para garantizar la imprevisibilidad, el PRNG se alimenta con una semilla obtenida de un Generador de Números Aleatorios por Hardware (HRNG).
-
-El fallo de seguridad crítico surge cuando la recolección de entropía falla, lo que es común en dispositivos del Internet de las Cosas (IoT) o servidores \textit{headless} durante su arranque. Si el sistema sufre de un ``agujero de entropía'', el HRNG alimentará al PRNG con una semilla predecible. El resultado es que diferentes máquinas generan la misma secuencia pseudoaleatoria, creando claves RSA que comparten uno de sus factores primos \cite{vage2022}.
-
-\section{Explotación mediante el Máximo Común Divisor (Ataque GCD)}
-Si dos módulos RSA públicos, $N_1$ y $N_2$, comparten un factor primo $p$ debido a la falta de entropía, la complejidad de romper ambas claves se reduce a un simple cálculo de Máximo Común Divisor (GCD) \cite{pelofske2023}:
-\begin{equation}
-    \text{GCD}(N_1, N_2) = p
-\end{equation}
-
-Una vez obtenido $p$, el atacante puede calcular $q_1 = N_1 / p$ y $q_2 = N_2 / p$, factorizando instantáneamente ambas claves. El desafío técnico de esta investigación es cómo calcular este GCD de forma eficiente entre miles de millones de claves públicas.
+La necesidad de proteger la información y las comunicaciones ha existido desde hace siglos. Ya en la Antigüedad se empleaban métodos sencillos para dificultar la lectura de los mensajes por parte de terceros, y más adelante, durante la Segunda Guerra Mundial, máquinas como Enigma demostraron hasta qué punto la criptografía podía ser decisiva en contextos militares y estratégicos.
+\\
+\\
+Sin embargo, todos estos métodos compartían una característica común: se trataba de sistemas de criptografía simétrica, es decir, emisor y receptor debían conocer previamente la misma clave secreta. Este enfoque puede funcionar en escenarios reducidos, pero plantea problemas evidentes cuando el número de usuarios crece. En el contexto actual, donde millones de personas se conectan continuamente a servicios en Internet, repartir de forma segura una misma clave entre todas las partes resulta inviable.
+\\
+\\
+Para dar respuesta a este problema surgió la criptografía asimétrica, basada en el uso de dos claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto \cite{rivest1978method}. Gracias a este modelo, hoy es posible establecer comunicaciones seguras sin necesidad de haber intercambiado previamente una clave secreta. Además, la criptografía asimétrica permite no solo cifrar información, sino también autenticar identidades y firmar digitalmente mensajes, por lo que se ha convertido en una herramienta fundamental dentro de la seguridad informática.
+\\
+\\
+Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados históricamente ha sido RSA. Su seguridad se basa en la dificultad de factorizar números enteros grandes obtenidos como producto de dos números primos también grandes \cite{rivest1978method}. En condiciones normales, esta dificultad hace que obtener la clave privada a partir de la clave pública resulte inviable en la práctica. Por ello, RSA ha ocupado durante muchos años un papel central dentro de la infraestructura de clave pública y de los certificados digitales utilizados en la Web.
+\\
+\\
+No obstante, la seguridad de RSA no depende únicamente de su fundamento matemático, sino también de cómo se generan las claves en la práctica. Trabajos previos han mostrado que errores en este proceso pueden dar lugar a claves vulnerables, lo que convierte el análisis de implementaciones reales en una cuestión especialmente relevante desde el punto de vista de la ciberseguridad \cite{heninger2012mining,vage2022finding,pelofske2024efficient}.
+\\
+\\
+En este contexto, los \textit{Certificate Transparency logs} o \textit{CT logs} constituyen una fuente de información especialmente interesante, ya que permiten acceder a grandes volúmenes de certificados reales emitidos para sitios web. Esto los convierte en una base de datos muy valiosa para estudiar cómo se está desplegando realmente la criptografía en Internet y para detectar posibles debilidades en claves públicas utilizadas en la práctica \cite{vage2022finding}.
+\\
+\\
+La tesis en la que se apoya este trabajo, \textit{Finding shared RSA factors in the Certificate Transparency logs}, mostró precisamente el interés de este enfoque y puso de manifiesto que todavía existe margen para seguir ampliando este tipo de análisis sobre conjuntos de datos aún mayores \cite{vage2022finding}. Por otro lado, el artículo de Pelofske propone el algoritmo \textit{Binary Tree Batch GCD} como una alternativa más eficiente al enfoque clásico basado en \textit{product tree} y \textit{remainder tree} \cite{pelofske2024efficient}.
+\\
+\\
+Partiendo de estas dos referencias, en este Trabajo de Fin de Máster seguiremos una estrategia doble. Por un lado, reproduciremos en Python la comparación experimental entre ambos métodos presentada en el artículo de Pelofske, con el fin de estudiar en un entorno controlado su comportamiento relativo sobre datos sintéticos. Por otro lado, desarrollaremos una implementación propia en C++17 orientada a la aplicación práctica del algoritmo sobre conjuntos de claves RSA reales extraídas de \textit{CT logs}.
+\\
+\\
+De este modo, el trabajo no se limitará únicamente a revisar una propuesta reciente desde el punto de vista teórico, sino que combinará reproducción experimental, desarrollo algorítmico e implementación aplicada. En una primera fase validaremos el comportamiento de los métodos sobre datos sintéticos generados de forma controlada. En una segunda fase utilizaremos nuestra implementación en C++ para trabajar sobre datos reales obtenidos a partir de \textit{CT logs}, con el objetivo de sentar las bases para un análisis de mayor escala.
+\\
+\\
+Desde el punto de vista de la ciberseguridad, este trabajo resulta relevante por varios motivos. Por un lado, nos permitirá estudiar una vulnerabilidad concreta pero con consecuencias graves, ya que una mala generación de claves puede comprometer completamente la seguridad de RSA. Por otro, nos situará en un escenario de análisis aplicado sobre datos reales, algo especialmente valioso en un ámbito donde no basta con que los algoritmos sean seguros en teoría, sino que también deben comportarse correctamente en la práctica.
+\\
+\\
+En este Trabajo de Fin de Máster estudiaremos el problema de la detección de claves RSA vulnerables a partir del análisis de certificados publicados en \textit{Certificate Transparency logs}, tomando como punto de partida una tesis previa y apoyándonos en un algoritmo más reciente y eficiente. A lo largo del documento presentaremos primero los fundamentos teóricos necesarios, revisaremos después el estado del arte, describiremos la metodología seguida, expondremos los resultados obtenidos y, finalmente, discutiremos las principales conclusiones derivadas del trabajo.

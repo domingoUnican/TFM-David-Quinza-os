@@ -40,7 +40,7 @@ A Binary Tree Batch GCD approach}
 
 % --- Título ---
 {\titlefont\bfseries\fontsize{20}{24}\selectfont
-Busqueda de factores RSA compartidos en los registros de Transparencia de Certificados:\\
+Búsqueda de factores RSA compartidos en los registros de Transparencia de Certificados:\\
 Un enfoque basado en el algoritmo Binary Tree Batch GCD\par}
 
 \vspace{0.25cm}
@@ -94,48 +94,13 @@ Junio -- 2026}
 
 \input{capitulo1.tex}
 
-% -------------------------------------------------------------------
-% CAPÍTULO 4
-% -------------------------------------------------------------------
+\input{capitulo2.tex}
 
-\chapter{Metodología y Experimentación}
+\input{capitulo3.tex}
 
-Este capítulo detalla el diseño experimental utilizado para replicar y optimizar la auditoría de claves RSA públicas. Se describe el proceso de recolección de datos desde los registros de \textit{Certificate Transparency}, la justificación del entorno de programación elegido y la arquitectura de implementación del algoritmo \textit{Binary Tree Batch GCD}.
+\input{capitulo4.tex}
 
-\section{Recolección y Filtrado de Datos (CT Logs)}
-Para realizar un análisis empírico representativo, es necesario contar con un conjunto de datos masivo de claves RSA en uso real. Al igual que en investigaciones anteriores \cite{vage2022}, la fuente de datos principal son los registros de \textit{Certificate Transparency} (CT logs). 
-
-El proceso de recolección consta de las siguientes fases:
-\begin{enumerate}
-    \item \textbf{Descarga de certificados:} Se realiza la conexión a los servidores de los CT logs (como Argon2021 u homólogos recientes) para descargar bloques de certificados X.509.
-    \item \textbf{Filtrado por longitud de clave:} Se descartan los pre-certificados y aquellos certificados que no utilicen el criptosistema RSA. De los restantes, se aíslan estrictamente aquellos cuyas claves públicas tengan una longitud de 2048 bits \cite{vage2022}.
-    \item \textbf{Eliminación de duplicados:} Es un requisito matemático crítico que cada módulo RSA ingresado al algoritmo sea único. Si se introducen claves duplicadas, la operación de Máximo Común Divisor devolverá el propio módulo $N$ en lugar del factor primo compartido, invalidando el análisis \cite{vage2022}.
-\end{enumerate}
-
-\section{Selección del Entorno y Lenguaje de Programación}
-La experimentación original de Våge sobre 159 millones de claves utilizando el algoritmo \textit{Remainder Tree Batch GCD} requirió 88 horas de cómputo en 30 núcleos, consumiendo hasta 180 GB de memoria RAM y 1 TB de almacenamiento en disco \cite{vage2022}. 
-
-Por otro lado, la implementación de referencia del algoritmo \textit{Binary Tree Batch GCD} propuesta por Pelofske fue desarrollada en Python 3 \cite{pelofske2023}. Si bien Python es excelente para prototipado, carece de la eficiencia necesaria para gestionar dinámicamente el manejo de memoria a la escala de cientos de millones de enteros gigantes. El propio autor sugiere el uso de lenguajes compilados de bajo nivel y la paralelización para escalar el algoritmo \cite{pelofske2023}.
-
-Por este motivo, la metodología de este trabajo propone la implementación del algoritmo en \textbf{C++}. El uso de C++ permite un control estricto sobre la asignación y liberación de memoria RAM durante la construcción del árbol binario. Para la manipulación de los enteros gigantes (números de más de 600 dígitos decimales), se utilizará la librería \textbf{GMP (GNU Multiple Precision Arithmetic Library)}, el estándar de la industria para aritmética de precisión arbitraria \cite{vage2022}. Además, se integrará la API \textbf{OpenMP} para paralelizar la carga de trabajo entre múltiples núcleos del procesador.
-
-\section{Arquitectura del Algoritmo Binary Tree Batch GCD}
-La implementación en C++ se estructura en tres fases secuenciales, diseñadas para explotar las propiedades del Máximo Común Divisor y evitar la construcción del costoso árbol de residuos:
-
-\begin{itemize}
-    \item \textbf{Fase 1: Construcción del Árbol de Productos y GCD en línea.} Partiendo del conjunto de módulos únicos de 2048 bits en las hojas del árbol, se agrupan en pares. En cada nodo padre, se realizan dos operaciones simultáneas: se calcula el GCD entre los dos nodos hijos y posteriormente se multiplican.  Este proceso se repite recursivamente hasta llegar a la raíz del árbol \cite{pelofske2023}.
-    \item \textbf{Fase 2: Agregación de Factores Compartidos ($B$).} Cada vez que la operación GCD en la Fase 1 devuelve un resultado distinto de 1, significa que se ha encontrado un factor primo compartido (o el producto de varios). Todos estos divisores no triviales se multiplican de forma acumulativa para formar un único entero gigante denominado $B$ \cite{pelofske2023}.
-    \item \textbf{Fase 3: Enumeración Final.} Para identificar exactamente qué claves originales contienen los factores comprometidos, se paraleliza un bucle que calcula $\text{GCD}(N_i, B)$ para cada clave $N_i$ del conjunto original. Los resultados distintos de 1 revelan las claves vulnerables \cite{pelofske2023}.
-\end{itemize}
-
-\section{Diseño del Benchmarking y Métricas de Éxito}
-Para evaluar la viabilidad y superioridad del nuevo algoritmo, se establecerán las siguientes métricas comparativas frente a los resultados históricos de la literatura:
-\begin{enumerate}
-    \item \textbf{Tiempo de ejecución (CPU Time):} Medición del tiempo total requerido para procesar el dataset completo. Se espera confirmar una aceleración (speedup) significativa \cite{pelofske2023}.
-    \item \textbf{Consumo máximo de memoria (Peak RAM):} Monitorización de la memoria asignada por el proceso en C++, esperando una reducción drástica al no tener que mantener en memoria los niveles del árbol de residuos.
-    \item \textbf{Efectividad de vulnerabilidad:} Conteo del número total de claves RSA únicas factorizadas con éxito, validando que el algoritmo matemático es funcional y preciso.
-\end{enumerate}
-
+\input{capitulo5.tex}
 
 % Indique aquí el fichero .bib que contenga su bibliografía.
 \bibliography{refs}

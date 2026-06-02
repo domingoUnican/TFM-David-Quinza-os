@@ -148,16 +148,17 @@
   {\fuented Facultad de Ciencias}\vspace{2cm}\par
   {\fuentee \@titulo}\vspace{5mm}\par
   {\fuentec \@ingles}\vspace{2cm}\par
-  {\fuentea Trabajo de fin de grado\\ para acceder al}
+  {\fuentea Trabajo de fin de máster\\ para acceder al}
   \vspace{1cm}\par
-  {\fuenteb GRADO EN INGENIERÍA INFORMÁTICA}
+  {\fuenteb MÁSTER INTERUNIVERSITARIO (UC-UIMP) EN DATA SCIENCE }
   \end{center}
   \vfill
   \begin{flushright}
   {\fuentea
   \begin{tabular}{rl}
   Autor:& \@autor\\[3mm]
-  Director:& Domingo Gómez Pérez\\[6mm]
+  Codirector:& Ana I. Gómez Pérez\\[3mm]
+  Codirector:& Domingo Gómez Pérez\\[6mm]
   \end{tabular}\par
   \@fecha}
   \end{flushright}

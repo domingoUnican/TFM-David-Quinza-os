@@ -1,0 +1,9 @@
+Hoy hemos creado la biblioteca compartida de Zenodo, hablado sobre cómo enfocar el TFM y fijado los objetivos para completar antes de la siguiente tutoría:
+
+1. Terminar de leer los surveys subidos a Zotero
+2. Escribir la introducción del TFM
+3. Escribir en la sección siguiente a la introducción una lista de las cosas que vamos a hacer (en la que luego se añadirán y eliminarán cosas)
+4. Buscar artículos y comprobar si cumplen 3 condiciones que hemos fijado:
+- Si tiene un dataset abierto para descargar
+- Si tiene código para ejecutar directamente
+- Si es fácil implementarlo y programarlo

@@ -1,0 +1,4 @@
+Algoritmo,Ejecuciones completadas,Tiempo medio (s),Tiempo mediano (s),Tiempo máximo (s),RAM media (MB),RAM máxima (MB)
+Binary Tree (C++/GMP),18,1.0336666666666667,0.8065,2.86,23.09444444444445,65.16
+Binary Tree (Python),18,37.904222222222224,22.2265,152.171,52.79388888888888,96.17
+Remainder Tree (Python),18,234.49244444444443,137.2995,870.56,66.1561111111111,124.33

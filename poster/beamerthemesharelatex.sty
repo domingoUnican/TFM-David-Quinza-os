@@ -1,0 +1,61 @@
+\mode<presentation>
+
+\definecolor{posterblue}{RGB}{22,61,102}
+\definecolor{posterlightblue}{RGB}{228,238,247}
+\definecolor{posterorange}{RGB}{206,103,37}
+\definecolor{postergray}{RGB}{65,65,65}
+
+\setbeamercolor{headline}{fg=white,bg=posterblue}
+\setbeamercolor{title in headline}{fg=white,bg=posterblue}
+\setbeamercolor{author in headline}{fg=white,bg=posterblue}
+\setbeamercolor{institute in headline}{fg=white,bg=posterblue}
+\setbeamercolor{section in head/foot}{fg=white,bg=posterblue}
+\setbeamercolor{block title}{fg=white,bg=posterblue}
+\setbeamercolor{block body}{fg=black,bg=posterlightblue}
+\setbeamercolor{structure}{fg=posterorange}
+\setbeamercolor{normal text}{fg=postergray,bg=white}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+\setbeamertemplate{headline}{
+  \leavevmode
+  \begin{beamercolorbox}[wd=\paperwidth,sep=1.4cm]{headline}
+    \begin{columns}[T,totalwidth=\paperwidth]
+      \begin{column}{0.15\paperwidth}
+        \centering
+        \vspace{0.2cm}
+        \ifdefined\posterlogopath
+          \includegraphics[height=5.0cm]{\posterlogopath}
+        \fi
+      \end{column}
+      \begin{column}{0.70\paperwidth}
+        \centering
+        {\usebeamercolor[fg]{title in headline}\bfseries\Huge\inserttitle\par}
+        \vspace{0.6cm}
+        {\usebeamercolor[fg]{author in headline}\Large\insertauthor\par}
+        \vspace{0.3cm}
+        {\usebeamercolor[fg]{institute in headline}\large\insertinstitute\par}
+      \end{column}
+      \begin{column}{0.15\paperwidth}
+        \centering
+        \vspace{1.2cm}
+        {\Large\insertdate}
+      \end{column}
+    \end{columns}
+  \end{beamercolorbox}
+}
+
+\setbeamertemplate{block begin}{
+  \vskip1.1ex
+  \begin{beamercolorbox}[rounded=true,shadow=false,leftskip=1.0em,colsep*=0.75ex]{block title}
+    \usebeamerfont*{block title}\insertblocktitle
+  \end{beamercolorbox}
+  {\parskip0.8ex
+  \begin{beamercolorbox}[rounded=true,shadow=false,colsep*=1.0ex,sep=1.0ex]{block body}
+}
+
+\setbeamertemplate{block end}{
+  \end{beamercolorbox}}
+
+\mode<all>

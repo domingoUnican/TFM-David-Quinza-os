@@ -1,0 +1,21 @@
+Log,ZIPs totales,ZIPs procesados,ZIPs sin issuer,ZIPs fallidos,Pares módulo-issuer desde parts,Módulos únicos,ZIPs pendientes,Completo,Módulos únicos desde parts
+ct_digicert_yeti2025,118,118,0,0,474084,3902,0,True,3902
+ct_digicert_nessie2025,53,53,0,0,184236,3408,0,True,3408
+ct_digicert_sphinx2024h1,1,1,0,0,360,350,0,True,350
+ct_digicert_sphinx2024h2,2,2,0,0,5762,2823,0,True,2823
+ct_digicert_sphinx2025h1,17,17,0,0,50720,3087,0,True,3087
+ct_digicert_wyvern2024h1,1,1,0,0,359,348,0,True,348
+ct_digicert_wyvern2024h2,2,2,0,0,5524,2704,0,True,2704
+ct_digicert_wyvern2025h1,17,17,0,0,50800,3092,0,True,3092
+ct_letsencrypt_oak2025h1,60,60,0,0,319920,5211,0,True,5211
+ct_letsencrypt_oak2026h1,36,36,0,0,134856,3653,0,True,3653
+ct_letsencrypt_oak2026h2,8,8,0,0,33136,4070,0,True,4070
+ct_sectigo_mammoth2024h1,2,2,0,0,1332,663,0,True,663
+ct_sectigo_mammoth2024h2,19,19,0,0,80123,4134,0,True,4134
+ct_sectigo_mammoth2025h2,52,52,0,0,286884,5415,0,True,5415
+ct_sectigo_sabre2024h1,12,12,0,0,21144,1720,0,True,1720
+ct_sectigo_sabre2024h2,17,17,0,0,70584,4071,0,True,4071
+ct_sectigo_sabre2025h2,73,73,0,0,415662,5594,0,True,5594
+ct_sectigo_elephant2025h2,74,67,7,0,122141,1727,0,True,1727
+ct_sectigo_tiger2025h2,75,66,9,0,59160,1644,0,True,1644
+ct_trustasia_log2024,5,5,0,0,27560,5425,0,True,5425

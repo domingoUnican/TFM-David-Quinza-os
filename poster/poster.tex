@@ -1,0 +1,410 @@
+%==============================================================================
+%== Poster TFM — David Quinzaños Saiz ==========================================
+%==============================================================================
+
+\documentclass{article}
+
+\usepackage[
+  paperwidth=84.1cm,
+  paperheight=118.9cm,
+  margin=2.5cm
+]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+\pagestyle{empty}
+
+\definecolor{posterblue}{RGB}{22,61,102}
+\definecolor{posterorange}{RGB}{206,103,37}
+\definecolor{postergray}{RGB}{45,45,45}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.62em}
+\renewcommand{\familydefault}{\sfdefault}
+\renewcommand{\labelitemi}{\textcolor{posterorange}{\large$\blacktriangleright$}}
+
+\newlength{\postercolwidth}
+\setlength{\postercolwidth}{25.05cm}
+
+\newcommand{\highlight}[1]{\textcolor{posterorange}{\textbf{#1}}}
+\newcommand{\smalltable}{\fontsize{20}{24}\selectfont}
+
+\newenvironment{posterblock}[1]
+{
+  \vspace{0.45cm}
+  \noindent
+  \begin{minipage}{\postercolwidth}
+  \colorbox{posterblue}{%
+    \parbox{\dimexpr\postercolwidth-2\fboxsep\relax}{%
+      \color{white}\bfseries\fontsize{30}{36}\selectfont #1
+    }%
+  }
+  \par\vspace{0.22cm}
+  \color{postergray}
+  \fontsize{25}{30}\selectfont
+}
+{
+  \end{minipage}
+  \par
+}
+
+\begin{document}
+\fontsize{27}{33}\selectfont
+
+%==============================================================================
+% Header
+%==============================================================================
+\noindent
+\colorbox{posterblue}{%
+  \begin{minipage}{\dimexpr\textwidth-4\fboxsep\relax}
+  \vspace{0.65cm}
+  \begin{minipage}{0.13\textwidth}
+    \centering
+    \includegraphics[height=4.8cm]{assets/uc.png}
+  \end{minipage}%
+  \begin{minipage}{0.68\textwidth}
+    \centering
+    {\color{white}\bfseries\fontsize{46}{54}\selectfont
+    Búsqueda de factores RSA compartidos en los Registros de Transparencia de Certificados\\
+    \fontsize{40}{48}\selectfont un enfoque basado en Binary Tree Batch GCD\par}
+    \vspace{0.45cm}
+    {\color{white}\fontsize{29}{35}\selectfont
+    David Quinzaños Saiz, Ana I. Gómez Pérez, Domingo Gómez Pérez\par}
+    \vspace{0.2cm}
+    {\color{white}\fontsize{24}{29}\selectfont
+    Departamento de Matemáticas, Estadística y Computación — Universidad de Cantabria\par}
+  \end{minipage}%
+  \begin{minipage}{0.13\textwidth}
+    \centering
+    {\color{white}\fontsize{24}{30}\selectfont
+    Trabajo en curso\\
+    Resultados finales\\
+    en Altamira pendientes}
+  \end{minipage}
+  \vspace{0.65cm}
+  \end{minipage}
+}
+
+\vspace{0.55cm}
+
+%==============================================================================
+% Three manual columns
+%==============================================================================
+\noindent
+\begin{minipage}[t]{\postercolwidth}
+
+\begin{posterblock}{Motivación y objetivo}
+La seguridad de RSA depende de que los primos usados para construir cada módulo
+$N=p\cdot q$ sean impredecibles y no se reutilicen. Si dos módulos comparten un
+factor primo, basta calcular $\gcd(N_i,N_j)$ para comprometer ambas claves.
+
+Este escenario es especialmente relevante en certificados digitales, porque la
+clave pública RSA forma parte del certificado y puede obtenerse de forma
+abierta. Los Registros de Transparencia de Certificados (\textit{Certificate
+Transparency logs}) proporcionan, por tanto, una fuente masiva de claves reales
+emitidas en Internet sobre la que es posible realizar auditorías criptográficas.
+
+Este problema ya fue estudiado en la tesis \textit{Finding shared RSA factors in
+the Certificate Transparency logs}, donde se analizan certificados reales
+extraídos de CT logs mediante técnicas \textit{batch GCD} clásicas. Ese trabajo
+demuestra el interés práctico de auditar los CT logs, pero también evidencia el
+elevado coste computacional del análisis masivo.
+
+Como mejora algorítmica, el artículo de Pelofske propone \textit{Binary Tree
+Batch GCD}, un método más eficiente que evita parte del coste del enfoque
+clásico basado en \textit{remainder tree}.
+
+Este TFM conecta ambas líneas: toma como objetivo aplicado la búsqueda de
+factores RSA compartidos en CT logs, evalúa el algoritmo \textit{Binary Tree
+Batch GCD} frente al método clásico y desarrolla una implementación
+C++17/GMP/OpenMP preparada para ejecución masiva en Altamira.
+\end{posterblock}
+
+\begin{posterblock}{Algoritmo e implementación}
+El enfoque ingenuo requiere $\mathcal{O}(M^2)$ cálculos GCD para $M$ módulos
+RSA. El \textit{batch GCD} clásico evita esta comparación par a par mediante un
+\textit{product tree} y un \textit{remainder tree}, pero esta segunda estructura
+tiene un coste elevado.
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=1.14,
+  transform shape,
+  node distance=0.82cm and 0.82cm,
+  box/.style={rectangle, draw=posterblue!70, fill=posterblue!12, very thick,
+    minimum width=1.85cm, minimum height=0.82cm, font=\scriptsize},
+  rem/.style={rectangle, draw=red!70, fill=red!14, very thick,
+    minimum width=2.15cm, minimum height=0.82cm, font=\scriptsize},
+  gcdnode/.style={rectangle, draw=green!55!black, fill=green!13, very thick,
+    minimum width=1.85cm, minimum height=0.82cm, font=\scriptsize},
+  arr/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (n1) {$N_1$};
+\node[box, right=of n1] (n2) {$N_2$};
+\node[box, right=of n2] (n3) {$N_3$};
+\node[box, right=of n3] (n4) {$N_4$};
+\node[box, below=0.9cm of $(n1)!0.5!(n2)$] (p12) {$N_{12}$};
+\node[box, below=0.9cm of $(n3)!0.5!(n4)$] (p34) {$N_{34}$};
+\node[box, below=0.9cm of $(p12)!0.5!(p34)$] (pall) {$N_{1234}$};
+\node[rem, below=0.85cm of pall] (rall) {$N_{1234}\bmod N_{1234}^2$};
+\node[rem, below left=0.8cm and 0.75cm of rall] (r12) {$\bmod N_{12}^2$};
+\node[rem, below right=0.8cm and 0.75cm of rall] (r34) {$\bmod N_{34}^2$};
+\node[gcdnode, below=0.85cm of r12] (g12) {$\gcd(N_1,\cdot)$};
+\node[gcdnode, below=0.85cm of r34] (g34) {$\gcd(N_3,\cdot)$};
+\draw[arr] (n1) -- (p12);
+\draw[arr] (n2) -- (p12);
+\draw[arr] (n3) -- (p34);
+\draw[arr] (n4) -- (p34);
+\draw[arr] (p12) -- (pall);
+\draw[arr] (p34) -- (pall);
+\draw[arr] (pall) -- (rall);
+\draw[arr] (rall) -- (r12);
+\draw[arr] (rall) -- (r34);
+\draw[arr] (r12) -- (g12);
+\draw[arr] (r34) -- (g34);
+\node[font=\scriptsize\bfseries, text=posterblue, left=0.35cm of p12] {Product tree};
+\node[font=\scriptsize\bfseries, text=red!70!black, left=0.35cm of r12] {Remainder tree};
+\end{tikzpicture}
+\end{center}
+
+\textit{Binary Tree Batch GCD} elimina el \textit{remainder tree} completo:
+durante el árbol de productos calcula GCD entre los hijos de cada nodo, agrega
+los GCD no triviales en una variable $B$ y finalmente comprueba
+$\gcd(N_i,B)$. Esta estrategia es más eficiente cuando los factores compartidos
+son pocos respecto al número total de claves, como se espera en CT logs reales.
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=1.14,
+  transform shape,
+  node distance=1.0cm and 0.55cm,
+  mod/.style={circle, draw=black, very thick, minimum size=1.18cm, font=\scriptsize},
+  prod/.style={circle, draw=black, very thick, minimum size=1.28cm, font=\scriptsize},
+  group/.style={ellipse, draw=black, dashed, inner xsep=0.1cm, inner ysep=0.12cm},
+  gcd/.style={blue, very thick},
+  edge/.style={red, thick, -{Latex[length=2mm]}}
+]
+
+\node[mod] (bn1) {$N_1$};
+\node[mod, right=1.45cm of bn1] (bn2) {$N_2$};
+\node[mod, right=1.65cm of bn2] (bn3) {$N_3$};
+\node[mod, right=1.45cm of bn3] (bn4) {$N_4$};
+
+\node[prod, below=1.55cm of bn2] (bp12) {$N_1N_2$};
+\node[prod, below=1.55cm of bn3] (bp34) {$N_3N_4$};
+\node[prod, below=1.55cm of $(bp12)!0.5!(bp34)$] (bpall) {$N_1\cdots N_4$};
+
+\draw[gcd] (bn1) -- node[above, font=\scriptsize] {GCD} (bn2);
+\draw[gcd] (bn3) -- node[above, font=\scriptsize] {GCD} (bn4);
+\draw[gcd] (bp12) -- node[above, font=\scriptsize] {GCD} (bp34);
+
+\draw[edge] (bn1) -- (bp12);
+\draw[edge] (bn2) -- (bp12);
+\draw[edge] (bn3) -- (bp34);
+\draw[edge] (bn4) -- (bp34);
+\draw[edge] (bp12) -- (bpall);
+\draw[edge] (bp34) -- (bpall);
+
+\node[group, fit=(bn1)(bn2)] {};
+\node[group, fit=(bn3)(bn4)] {};
+\node[group, fit=(bp12)(bp34)] {};
+\node[font=\scriptsize\bfseries, text=posterblue, below=0.15cm of bpall]
+{GCD por ramas + acumulación en $B$};
+\end{tikzpicture}
+\end{center}
+
+Las versiones Python de Pelofske se usan como referencia, pero su sobrecarga en
+enteros grandes limita el escalado. Por ello se implementa el algoritmo en
+C++17 con GMP y OpenMP, mejorando la aritmética multiprecisión, el control de
+memoria y la paralelización.
+
+La validación combina dos fases: primero experimentos sintéticos en local, con
+módulos RSA de 1024 y 2048 bits y distintos números de claves débiles; después,
+ejecución en Altamira para reproducir el benchmark con los tamaños originales
+del artículo y atacar el conjunto real de certificados de CT logs.
+\end{posterblock}
+
+\end{minipage}
+\hfill
+\begin{minipage}[t]{\postercolwidth}
+
+\begin{posterblock}{Resultados preliminares}
+El procedimiento experimental se planteó de forma incremental. Primero se
+desarrolló una implementación propia de \textit{Binary Tree Batch GCD} en
+C++/GMP, con el objetivo de disponer de una versión más eficiente que las
+implementaciones Python y adecuada para una ejecución posterior sobre datos
+reales.
+
+A continuación se generaron datos sintéticos con módulos RSA controlados y un
+número conocido de claves débiles. Esta fase permitió comprobar que el algoritmo
+detectaba correctamente los factores compartidos y estudiar cómo variaba el
+tiempo de ejecución al aumentar el número de módulos.
+
+\begin{center}
+\includegraphics[width=0.94\postercolwidth]{assets/escalabilidad_batch_gcd.pdf}
+\end{center}
+
+Una vez validada la implementación propia, se utilizó el repositorio asociado al
+artículo de Pelofske para reproducir una comparación más próxima al experimento
+original. El repositorio aportaba las implementaciones Python de
+\textit{Remainder Tree Batch GCD} y \textit{Binary Tree Batch GCD}, además de
+parte de los primos usados para generar los módulos sintéticos.
+
+Para integrarlo en el TFM fue necesario adaptar el código original: corregir
+incompatibilidades con versiones actuales de Python y NumPy, crear
+\textit{wrappers} de ejecución, normalizar la entrada de módulos y generar los
+primos adicionales necesarios para evaluar también módulos RSA de 2048 bits.
+
+\begin{center}
+\includegraphics[width=0.94\postercolwidth]{assets/tiempo_pelofske.pdf}
+\end{center}
+
+Con ello se compararon los tres algoritmos sobre los mismos datos de entrada:
+el método clásico en Python, el algoritmo de Pelofske en Python y la
+implementación propia en C++/GMP, usando módulos RSA de 1024 y 2048 bits y
+distintos números de claves débiles.
+\end{posterblock}
+
+\begin{posterblock}{Aceleración observada}
+En promedio, \textit{Binary Tree} Python fue aproximadamente $6.1\times$ más
+rápido que \textit{Remainder Tree} Python. La implementación C++/GMP fue
+aproximadamente $116.5\times$ más rápida que \textit{Remainder Tree} Python y
+$18.7\times$ más rápida que \textit{Binary Tree} Python.
+
+El caso más exigente de la parrilla local corresponde a módulos RSA-2048,
+$N=10000$ y \texttt{WEAK}=1000: el método clásico tardó 866.819 s, la versión
+Python del algoritmo de Pelofske 152.803 s y la implementación C++/GMP 5.851 s.
+
+\vspace{0.25cm}
+{\smalltable
+\begin{center}
+\begin{tabular}{cccrrr}
+\toprule
+Bits & \texttt{WEAK} & $N$ & Remainder Py. & Binary Py. & Binary C++ \\
+\midrule
+1024 & 100  & 10000 & 218.579 s & 33.721 s  & 1.381 s \\
+2048 & 100  & 10000 & 870.017 s & 132.484 s & 3.368 s \\
+2048 & 1000 & 10000 & 866.819 s & 152.803 s & 5.851 s \\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+\vspace{0.2cm}
+\centering
+\colorbox{posterorange}{%
+  \parbox{0.86\postercolwidth}{%
+    \centering\color{white}\bfseries
+    La implementación C++/GMP alcanza hasta $275\times$ de aceleración frente al método clásico en Python.
+  }%
+}
+\end{posterblock}
+
+\begin{posterblock}{Validación con datos reales}
+Sobre una muestra local de certificados ya extraída y normalizada:
+
+{\smalltable
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Elemento & Valor \\
+\midrule
+Registros de certificado & 112230 \\
+Registros con módulo RSA & 87462 \\
+Registros sin módulo RSA & 24768 \\
+Módulos RSA únicos & 601 \\
+RSA-2048 únicos & 318 \\
+RSA-3072 únicos & 94 \\
+RSA-4096 únicos & 189 \\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+La ejecución local sobre 601 módulos únicos no detectó factores compartidos y
+completó el análisis en 107.17 ms. Este resultado no pretende ser concluyente
+sobre la seguridad de los CT logs: su función es validar que el flujo completo
+funciona sobre datos reales.
+
+El conjunto local es pequeño frente a los estudios previos y frente al objetivo
+final en Altamira. Su utilidad es comprobar que los módulos reales llegan al
+binario C++ en el formato correcto y que la deduplicación previa evita trabajo
+redundante.
+\end{posterblock}
+
+\end{minipage}
+\hfill
+\begin{minipage}[t]{\postercolwidth}
+
+\begin{posterblock}{Ejecución pendiente en Altamira}
+El resultado final del póster se sustituirá por la campaña en Altamira:
+
+\begin{itemize}
+  \item benchmark completo con las $N$ originales del artículo;
+  \item ataque distribuido sobre el conjunto completo de certificados de CT
+  logs;
+  \item registro de tiempos, memoria pico, módulos RSA válidos, módulos únicos
+  y factores compartidos encontrados.
+\end{itemize}
+
+El diseño permite lanzar trabajos por bloques con un parámetro $N$ modificable,
+manteniendo el ataque global correcto mediante una comparación de cada bloque
+contra el producto global de todos los módulos.
+
+Esta separación permite explotar varios nodos sin convertir el análisis en una
+comparación parcial por bloques: si dos claves comparten un primo aunque estén
+en trabajos distintos, el método distribuido sigue pudiendo detectarlo.
+\end{posterblock}
+
+\begin{posterblock}{Estado actual}
+\begin{itemize}
+  \item Benchmark local validado frente a las implementaciones Python originales.
+  \item Implementación C++/GMP preparada para ejecución HPC.
+  \item Pipeline real validado: extracción, filtrado, deduplicación y análisis.
+  \item Pendiente: sustituir resultados preliminares por la salida completa de
+  Altamira.
+\end{itemize}
+
+La versión actual del póster usa resultados locales como marcador técnico. La
+estructura está preparada para reemplazar la tabla y las cifras por los CSV de
+Altamira cuando finalicen las ejecuciones.
+\end{posterblock}
+
+\begin{posterblock}{Conclusiones provisionales}
+\begin{itemize}
+  \item \textit{Binary Tree Batch GCD} reduce el coste práctico frente al método
+  clásico basado en \textit{remainder tree}.
+  \item La implementación C++17/GMP mejora de forma clara a las versiones
+  Python del repositorio original.
+  \item El flujo completo de extracción, normalización y análisis se ha validado
+  sobre certificados reales.
+  \item Altamira permitirá reemplazar los resultados provisionales por una
+  evaluación a escala real.
+\end{itemize}
+
+El trabajo ya valida metodología e implementación. La contribución final será
+cuantificar el comportamiento a escala y, si aparecen, reportar los factores RSA
+compartidos encontrados en el conjunto completo de CT logs.
+\end{posterblock}
+
+\begin{posterblock}{Referencias}
+\fontsize{18}{22}\selectfont
+R. L. Rivest, A. Shamir, L. Adleman, ``A method for obtaining digital signatures and public-key cryptosystems'', \textit{Communications of the ACM}, 1978.
+
+N. Heninger et al., ``Mining Your Ps and Qs'', \textit{USENIX Security}, 2012.
+
+H. F. Våge, ``Finding shared RSA factors in the Certificate Transparency logs'', Master's Thesis, University of Bergen, 2022.
+
+E. Pelofske, ``An Efficient All-to-All GCD Algorithm for Low Entropy RSA Key Factorization'', Preprint, 2024.
+\end{posterblock}
+
+\end{minipage}
+
+\end{document}

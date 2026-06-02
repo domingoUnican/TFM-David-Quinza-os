@@ -1,0 +1,30 @@
+============================================
+ Binary Tree Batch GCD — Datos Reales
+============================================
+Archivo          : /Users/davidquinza/Desktop/Máster Data Science/TFM/TFM_David_Quinzaños/resultados/ctlogs/moduli_hex_final_principal.txt
+Threads          : 18 (OpenMP)
+--------------------------------------------
+
+[Setup] 54275 modulos cargados desde /Users/davidquinza/Desktop/Máster Data Science/TFM/TFM_David_Quinzaños/resultados/ctlogs/moduli_hex_final_principal.txt
+  Primer modulo : 2045 bits
+  Ultimo modulo : 2048 bits
+
+  Tiempo de carga  : 52.87 ms
+
+[Fase 1] Arbol de productos + GCD en linea
+  Niveles construidos  : 16
+  GCDs no triviales    : 0
+  CPU Time             : 23753.25 ms
+
+[Fase 2] Agregacion en variable B
+  B bit-length         : 1 bits
+  CPU Time             : 0.00 ms
+
+
+[Fase 3] Enumeracion final
+  Claves vulnerables   : 0
+  CPU Time             : 2.96 ms
+
+============================================
+ Tiempo total algoritmo: 23756.22 ms
+============================================

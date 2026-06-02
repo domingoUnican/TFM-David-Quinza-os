@@ -1,0 +1,30 @@
+\chapter{Conclusiones y trabajo futuro}
+
+En este Trabajo de Fin de Máster se ha estudiado la detección de factores compartidos en claves públicas RSA extraídas de \textit{Certificate Transparency logs}. El punto de partida ha sido una línea de trabajo previa basada en el análisis masivo de certificados, representada principalmente por la tesis de Våge, y una propuesta algorítmica más reciente, el \textit{Binary Tree Batch GCD} de Pelofske.
+\\
+\\
+La primera conclusión del trabajo es que el algoritmo \textit{Binary Tree Batch GCD} constituye una alternativa práctica al enfoque clásico basado en \textit{product tree} y \textit{remainder tree}. La reproducción reducida del experimento de Pelofske confirma que, incluso en un entorno local y con tamaños de entrada menores que los del artículo original, la tendencia es clara: el algoritmo de árbol binario reduce de forma consistente el tiempo de ejecución frente al método clásico.
+\\
+\\
+La segunda conclusión es que la implementación tiene un impacto decisivo. La versión C++17/GMP desarrollada en este TFM mejora de forma muy notable a las implementaciones Python utilizadas como referencia. Esta mejora no se debe únicamente al cambio de lenguaje, sino también a la gestión explícita de los enteros intermedios y a la liberación de memoria durante la construcción del árbol. Para el objetivo aplicado del trabajo, esta diferencia es importante, porque convierte el algoritmo en una herramienta más adecuada para analizar conjuntos reales de certificados.
+\\
+\\
+La tercera conclusión es que el comportamiento observado al variar el número de claves débiles encaja con la motivación del algoritmo. El \textit{Binary Tree Batch GCD} resulta especialmente interesante cuando los factores compartidos son poco frecuentes en comparación con el tamaño total del conjunto. Este escenario es precisamente el esperable en una colección real de certificados: la mayoría de claves deberían ser seguras, y los factores compartidos, si aparecen, deberían ser casos excepcionales.
+\\
+\\
+Además, se ha validado el flujo completo sobre datos reales. La muestra local de certificados procedentes de \textit{CT logs} permitió obtener 601 módulos RSA únicos después de filtrar las claves RSA y eliminar duplicados. Ese conjunto fue procesado correctamente por el binario \texttt{batch\_gcd\_real}. En esa muestra no se detectaron claves vulnerables, pero el resultado principal de esta fase no es la ausencia de factores compartidos, sino la comprobación de que el proceso completo funciona sobre datos reales: extracción de certificados, filtrado de claves RSA, normalización de módulos, eliminación de duplicados y ejecución del algoritmo.
+\\
+\\
+Esa validación local no agota, sin embargo, el objetivo aplicado del trabajo. A partir de ella se ha preparado una campaña de mayor escala basada en módulos extraídos de \textit{ct-archive}. El flujo desarrollado descarga los archivos comprimidos de los logs seleccionados, extrae los certificados presentes en las carpetas \texttt{issuer/} o \texttt{issuers/}, obtiene de cada uno el módulo RSA y el emisor, y genera tanto una relación \texttt{modulo||issuer} como un conjunto deduplicado de módulos para alimentar al binario C++.
+\\
+\\
+La preparación de esta campaña ha puesto de manifiesto que la obtención de módulos reales es una parte relevante del problema. No basta con disponer del algoritmo: es necesario controlar descargas parciales, revisar archivos marcados erróneamente como carentes de \texttt{issuer/}, deduplicar correctamente los módulos y conservar información contextual suficiente para interpretar los resultados. Este proceso convierte la implementación en una herramienta más cercana a una auditoría real sobre \textit{CT logs}.
+\\
+\\
+La ejecución final está preparada para realizarse en Altamira, donde se podrá aprovechar un entorno de cómputo más adecuado que el portátil utilizado para los experimentos locales. Esa ejecución deberá registrar, como mínimo, el número de certificados procesados, el número de módulos RSA válidos, el número de módulos únicos tras eliminar duplicados, el tiempo total de ejecución, el consumo de memoria y, en caso de aparecer, los módulos vulnerables y sus factores compartidos.
+\\
+\\
+Otra línea de mejora consiste en optimizar la segunda fase del algoritmo, en la que los \textit{gcd} no triviales se agregan en la variable \(B\). En la implementación actual esta parte se realiza de forma secuencial, lo que es suficiente para la validación realizada, pero podría mejorarse mediante una agregación por árbol o una estrategia paralela si el número de factores compartidos encontrados en un conjunto real fuese elevado.
+\\
+\\
+Finalmente, sería conveniente integrar de forma más sistemática el proceso de extracción y normalización de certificados, de modo que la salida del \textit{pipeline} de \textit{CT logs} pueda alimentar directamente al binario C++ sin pasos manuales intermedios. En esta dirección, el trabajo ya incorpora un flujo incremental de extracción de módulos; una mejora natural sería consolidarlo en una herramienta única, capaz de descargar, validar, deduplicar, ejecutar el ataque y generar un informe final reproducible sobre certificados reales.

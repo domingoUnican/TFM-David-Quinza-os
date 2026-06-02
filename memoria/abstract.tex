@@ -1,0 +1,10 @@
+This Master's Thesis studies the problem of shared factors in RSA public keys extracted from \textit{Certificate Transparency logs}. This vulnerability may appear when key generation is not performed with sufficient randomness, causing different RSA moduli to share a prime factor and therefore become efficiently factorable.
+\\
+\\
+The work builds, on the one hand, on the thesis \textit{Finding shared RSA factors in the Certificate Transparency logs}, which addressed this problem using a classical \textit{batch GCD} approach, and, on the other hand, on Pelofske's article, which proposes the \textit{Binary Tree Batch GCD} algorithm as a more efficient alternative. Based on these references, we develop a C++17 implementation using GMP, compare it against the original Python implementations from the article, and prepare its application to real certificates extracted from \textit{CT logs}.
+\\
+\\
+The experimental evaluation reproduces, at a reduced scale, the structure of Pelofske's experiment, using 1024-bit and 2048-bit RSA moduli, three levels of weak keys, and several input sizes. The results confirm that \textit{Binary Tree Batch GCD} consistently improves over the classical \textit{remainder tree} approach, and show that the C++/GMP implementation significantly reduces both runtime and memory consumption.
+\\
+\\
+In addition, the procedure is validated on a real-world sample of certificates obtained from \textit{CT logs}. After filtering RSA keys and removing duplicates, the resulting dataset contains 601 unique RSA moduli, with sizes of 2048, 3072, and 4096 bits. This execution confirms that the complete workflow of extraction, filtering, normalization, and analysis can be applied correctly to real data. Overall, this thesis combines the study of previous work, algorithmic development, experimental implementation, and applied validation on a real cybersecurity problem.

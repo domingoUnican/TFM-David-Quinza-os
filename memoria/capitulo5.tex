@@ -1,0 +1,176 @@
+\chapter{Resultados y discusión}
+
+En este capítulo presentamos los resultados obtenidos a partir de la metodología descrita anteriormente. La evaluación se organiza en dos partes. En primer lugar, se estudia el comportamiento de los algoritmos sobre datos sintéticos generados de forma controlada, siguiendo la estructura experimental del artículo de Pelofske. En segundo lugar, se aplica la implementación desarrollada a módulos RSA reales extraídos de \textit{Certificate Transparency logs}. Esta segunda parte incluye una validación local sobre una muestra ya normalizada y la preparación de una campaña de mayor escala basada en módulos extraídos incrementalmente de \textit{CT logs}.
+\\
+\\
+El objetivo principal de la primera parte no es únicamente comprobar que la implementación desarrollada funciona correctamente, sino también comparar su comportamiento con las implementaciones Python del repositorio original. De este modo, la evaluación permite estudiar tres aspectos complementarios: la diferencia entre el enfoque clásico basado en \textit{remainder tree} y el algoritmo \textit{Binary Tree Batch GCD}, el efecto de trasladar este último a C++ con GMP, y la influencia del número de claves débiles introducidas en el conjunto.
+
+\section{Configuración de la comparativa sintética}
+
+La comparativa sintética se diseñó tomando como referencia la Figura 2 del artículo de Pelofske \cite{pelofske2024efficient}. En dicho experimento se analizan dos tamaños de módulo RSA, 1024 y 2048 bits, y tres valores distintos para el número de claves débiles: 2, 100 y 1000. En nuestro caso se mantuvo esta misma estructura experimental, pero utilizando una parrilla reducida de tamaños de entrada para que la ejecución fuese viable en un entorno local.
+\\
+\\
+En concreto, se utilizaron módulos RSA de 1024 y 2048 bits, generados como producto de primos de 512 y 1024 bits respectivamente. Para cada tamaño de módulo se probaron los valores \(\texttt{WEAK}=2\), \(\texttt{WEAK}=100\) y \(\texttt{WEAK}=1000\), y para cada una de estas configuraciones se evaluaron conjuntos de \(N=2000\), \(N=5000\) y \(N=10000\) módulos. Estos valores de \(N\) son menores que los empleados en el artículo original, donde se llega hasta 75000 módulos para claves RSA-2048 y hasta 120000 módulos para claves RSA-1024. Esta reducción responde al coste computacional de ejecutar las implementaciones Python originales en un portátil, especialmente en el caso del método basado en \textit{remainder tree}.
+\\
+\\
+Los tres algoritmos comparados fueron los siguientes:
+
+\begin{itemize}
+    \item \textit{Remainder Tree Batch GCD}, utilizando la implementación Python original del repositorio de Pelofske.
+    \item \textit{Binary Tree Batch GCD}, utilizando también la implementación Python original del mismo repositorio.
+    \item \textit{Binary Tree Batch GCD} en C++17 con GMP, correspondiente a la implementación desarrollada en este trabajo.
+\end{itemize}
+
+Para garantizar que la comparación fuese homogénea, cada combinación de tamaño de módulo, valor de \(\texttt{WEAK}\) y valor de \(N\) generó un único archivo de módulos en hexadecimal. Los tres algoritmos se ejecutaron después sobre ese mismo archivo de entrada. De este modo, las diferencias observadas en tiempo de ejecución y consumo de memoria no se deben a variaciones en los datos, sino a la implementación y al algoritmo utilizado.
+\\
+\\
+El repositorio original de Pelofske no pudo utilizarse directamente sin adaptaciones. En particular, fue necesario introducir una capa de compatibilidad para versiones actuales de NumPy, ya que el código original utiliza \texttt{np.product}, alias eliminado en NumPy 2.0. También fue necesario resolver las rutas relativas empleadas por la función de generación de claves débiles, que espera encontrar los primos en un directorio \texttt{primes/} relativo a la raíz del repositorio. Estas modificaciones no alteran la lógica algorítmica de las implementaciones Python, sino que permiten ejecutarlas en un entorno actual.
+
+\section{Validación funcional}
+
+Antes de analizar los tiempos de ejecución, se comprobó que los tres algoritmos identificaban los mismos módulos vulnerables en cada configuración experimental. Esta validación es importante porque la implementación C++ no solo debe ser más rápida, sino también producir resultados compatibles con las implementaciones Python de referencia.
+\\
+\\
+Los resultados fueron consistentes en todas las combinaciones evaluadas: para cada conjunto sintético, los tres algoritmos detectaron exactamente el mismo número de módulos con factores compartidos. Por ejemplo, para \(\texttt{WEAK}=2\) se detectaron 4 módulos vulnerables; para \(\texttt{WEAK}=100\), los valores estuvieron alrededor de 200; y para \(\texttt{WEAK}=1000\), los valores oscilaron entre 1747 y 1970 según el tamaño total del conjunto.
+\\
+\\
+Conviene aclarar que el número de módulos vulnerables detectados no tiene por qué coincidir exactamente con el parámetro \(\texttt{WEAK}\). La función de generación utilizada por el repositorio original introduce nuevos módulos que comparten un factor con módulos ya existentes. Por tanto, al detectar vulnerabilidades aparecen tanto los módulos añadidos como los módulos originales con los que comparten factor. Además, cuando un mismo módulo original contiene dos factores que han sido reutilizados en módulos débiles distintos, el número total de módulos vulnerables puede ser menor que \(2 \cdot \texttt{WEAK}\). Lo relevante para nuestra validación es que las tres implementaciones coincidieron exactamente en todos los casos.
+
+\section{Comparación de tiempos de ejecución}
+
+La Figura~\ref{fig:tiempo_pelofske_extendida} muestra los tiempos de ejecución de los tres algoritmos. La figura se organiza de forma análoga al experimento de Pelofske: las filas distinguen el tamaño del módulo RSA y las columnas representan los distintos valores de \(\texttt{WEAK}\). La escala del eje vertical es logarítmica, ya que las diferencias entre la implementación C++ y las implementaciones Python son demasiado grandes para apreciarse correctamente en una escala lineal.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../figuras/comparativa_tiempo_pelofske_extendida.pdf}
+    \caption{Comparación del tiempo de ejecución de los tres algoritmos evaluados sobre datos sintéticos.}
+    \label{fig:tiempo_pelofske_extendida}
+\end{figure}
+
+Los resultados muestran una tendencia clara. En primer lugar, la implementación Python del \textit{Binary Tree Batch GCD} mejora de forma consistente al método clásico basado en \textit{Remainder Tree Batch GCD}. En promedio, el algoritmo de árbol binario fue aproximadamente 6,1 veces más rápido que el método clásico, con aceleraciones entre 3,6 y 7,9 según la configuración.
+\\
+\\
+En segundo lugar, la implementación C++ con GMP reduce de forma muy significativa el tiempo de ejecución respecto a las dos versiones Python. Frente al \textit{Remainder Tree Batch GCD}, la aceleración media fue de aproximadamente 116,5 veces, alcanzando un máximo de 275,3 veces. Frente al \textit{Binary Tree Batch GCD} en Python, la implementación C++ fue en promedio 18,7 veces más rápida, con un máximo de 41,3 veces.
+\\
+\\
+La Tabla~\ref{tab:tiempos_representativos} recoge algunos casos representativos de la comparativa. El caso más exigente dentro de nuestra parrilla experimental corresponde a módulos RSA de 2048 bits, \(N=10000\) y \(\texttt{WEAK}=1000\). En esa configuración, el método clásico tardó 866,819 segundos, la versión Python del algoritmo de Pelofske tardó 152,803 segundos y la implementación C++/GMP completó la ejecución en 5,851 segundos.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{|c|c|c|r|r|r|}
+        \hline
+        Bits & \(\texttt{WEAK}\) & \(N\) & Remainder Python & Binary Python & Binary C++/GMP \\
+        \hline
+        1024 & 100 & 10000 & 218,579 s & 33,721 s & 1,381 s \\
+        2048 & 100 & 10000 & 870,017 s & 132,484 s & 3,368 s \\
+        2048 & 1000 & 10000 & 866,819 s & 152,803 s & 5,851 s \\
+        \hline
+    \end{tabular}
+    \caption{Tiempos representativos de la comparativa sintética.}
+    \label{tab:tiempos_representativos}
+\end{table}
+
+Estos resultados son coherentes con la motivación del artículo de Pelofske. El algoritmo \textit{Binary Tree Batch GCD} reduce el coste práctico frente al método clásico al evitar la construcción explícita de un \textit{remainder tree}. Nuestra implementación confirma además que, al trasladar esta lógica a C++ y utilizar una biblioteca optimizada para aritmética multiprecisión como GMP, la mejora práctica es mucho mayor.
+
+\section{Comparación de consumo de memoria}
+
+Además del tiempo de ejecución, también se midió el pico de memoria RAM consumida por cada algoritmo. La Figura~\ref{fig:memoria_pelofske_extendida} muestra los resultados obtenidos.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../figuras/comparativa_memoria_pelofske_extendida.pdf}
+    \caption{Comparación del consumo pico de memoria de los tres algoritmos evaluados.}
+    \label{fig:memoria_pelofske_extendida}
+\end{figure}
+
+La tendencia observada es también favorable a la implementación C++/GMP. El mayor pico de memoria registrado para el método clásico en Python fue de 128,70 MB, mientras que la versión Python del algoritmo de Pelofske alcanzó 94,39 MB. En cambio, la implementación C++/GMP tuvo un máximo de 57,86 MB en el conjunto de experimentos.
+\\
+\\
+Esta diferencia no debe interpretarse únicamente como una consecuencia del lenguaje utilizado. También está relacionada con la forma en que la implementación gestiona los enteros intermedios durante la construcción del árbol. En particular, en la versión C++ se liberan los hijos de cada nodo cuando dejan de ser necesarios, reduciendo así la cantidad de datos mantenidos simultáneamente en memoria. Aunque el tamaño de los enteros crece inevitablemente al ascender por el árbol, esta gestión permite contener el pico de RAM.
+
+\section{Efecto del número de claves débiles}
+
+El parámetro \(\texttt{WEAK}\) permite observar cómo afecta la cantidad de factores compartidos al comportamiento de los algoritmos. Los resultados muestran que el método clásico basado en \textit{remainder tree} apenas cambia al variar este parámetro. Por ejemplo, con módulos RSA de 2048 bits y \(N=10000\), los tiempos fueron 864,321 segundos para \(\texttt{WEAK}=2\), 870,017 segundos para \(\texttt{WEAK}=100\) y 866,819 segundos para \(\texttt{WEAK}=1000\).
+\\
+\\
+En cambio, el efecto de \(\texttt{WEAK}\) sí es más visible en el algoritmo de árbol binario. En la misma configuración de 2048 bits y \(N=10000\), la versión Python pasó de 129,501 segundos con \(\texttt{WEAK}=2\) a 152,803 segundos con \(\texttt{WEAK}=1000\). La implementación C++/GMP pasó de 3,139 segundos a 5,851 segundos.
+\\
+\\
+Este comportamiento encaja con la interpretación del propio artículo de Pelofske. El algoritmo \textit{Binary Tree Batch GCD} resulta especialmente ventajoso cuando el número de factores compartidos es pequeño en comparación con el tamaño total del conjunto. A medida que aumenta el número de módulos débiles, la ventaja se reduce parcialmente, aunque el algoritmo sigue siendo claramente más eficiente que el enfoque clásico en todas las configuraciones evaluadas.
+
+\section{Aplicación a datos reales}
+
+Una vez validado el comportamiento sobre datos sintéticos y comparado con las implementaciones de referencia, el siguiente paso consiste en aplicar el algoritmo a certificados reales. Esta parte es la que conecta directamente con el objetivo aplicado del TFM: utilizar el nuevo algoritmo para buscar factores RSA compartidos en certificados extraídos de \textit{CT logs}.
+\\
+\\
+La primera validación se realizó en el entorno local con una muestra ya extraída y normalizada en un archivo de texto comprimido. Tras descomprimirlo, el archivo contiene registros procedentes de certificados X.509, incluyendo el emisor y el módulo cuando la clave pública es RSA. Dentro de esta muestra aparecen 112230 registros de certificado: 87462 contienen un módulo RSA y 24768 corresponden a claves para las que no se obtiene módulo RSA. Al eliminar duplicados, el conjunto utilizado por el algoritmo quedó reducido a 601 módulos RSA únicos. De ellos, 318 corresponden a módulos de 2048 bits, 94 a módulos de 3072 bits y 189 a módulos de 4096 bits.
+\\
+\\
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{|l|r|}
+        \hline
+        Elemento de la muestra local & Valor \\
+        \hline
+        Registros de certificado analizados & 112230 \\
+        Registros con módulo RSA & 87462 \\
+        Registros sin módulo RSA & 24768 \\
+        Módulos RSA únicos utilizados & 601 \\
+        Módulos RSA-2048 únicos & 318 \\
+        Módulos RSA-3072 únicos & 94 \\
+        Módulos RSA-4096 únicos & 189 \\
+        \hline
+    \end{tabular}
+    \caption{Resumen de la muestra real utilizada en la validación local.}
+    \label{tab:muestra_real}
+\end{table}
+
+La ejecución del binario \texttt{batch\_gcd\_real} sobre esta muestra confirmó que el programa podía procesar correctamente módulos RSA reales en el mismo formato utilizado para los experimentos sintéticos. La ejecución se realizó en modo secuencial, sin OpenMP, y cargó 601 módulos RSA. El árbol binario construido tuvo 10 niveles, no se encontraron \textit{gcd} no triviales durante la construcción y la fase final no detectó claves vulnerables. El tiempo total del algoritmo fue de 107,17 milisegundos.
+\\
+\\
+Este resultado no debe interpretarse como una conclusión general sobre la seguridad de los \textit{CT logs}. La muestra local es pequeña en comparación con los estudios previos y también con el conjunto completo disponible para la siguiente fase del trabajo. Su utilidad principal es validar el flujo completo: extracción de certificados, filtrado de claves RSA, normalización de módulos, eliminación de duplicados y ejecución del algoritmo sobre datos reales.
+\[
+\mbox{\texttt{real\_moduli.txt}} \longrightarrow \mbox{\texttt{batch\_gcd\_real}} \longrightarrow \mbox{factores compartidos detectados}
+\]
+El conjunto real analizado contiene 87462 registros con módulo RSA antes de eliminar duplicados. Un análisis ingenuo de todos los pares posibles sobre esos módulos requeriría
+\[
+\frac{87462 \cdot 87461}{2} = 3824756991
+\]
+comparaciones de máximo común divisor, lo que justifica la necesidad de utilizar un enfoque \textit{batch GCD}. En la práctica, además, se eliminan duplicados antes de ejecutar el algoritmo, ya que repetir varias veces el mismo módulo no aporta información nueva sobre factores compartidos y solo aumenta artificialmente el coste del análisis.
+
+\section{Preparación de la campaña sobre \textit{CT logs}}
+
+La muestra anterior permitió validar el flujo de extremo a extremo, pero no representa todavía el objetivo aplicado completo del trabajo. Para aproximarnos a una ejecución más realista se preparó una campaña de extracción de módulos a partir de \textit{ct-archive}, una colección pública de volcados de \textit{Certificate Transparency logs}. Esta fuente proporciona los datos organizados por log y por archivos comprimidos, lo que permite trabajar por partes sin necesidad de almacenar simultáneamente toda la colección.
+\\
+\\
+En esta fase se seleccionaron logs de DigiCert hasta \texttt{wyvern2025h1}, incluido. Para cada log, el procedimiento descarga los archivos ZIP correspondientes y extrae únicamente los certificados situados bajo las rutas \texttt{issuer/} o \texttt{issuers/}. A partir de cada certificado se obtiene el módulo de la clave pública RSA y el emisor. La salida intermedia mantiene los pares \texttt{modulo||issuer}, mientras que la entrada final para el algoritmo se construye eliminando duplicados y conservando un único módulo hexadecimal por línea.
+\\
+\\
+El hecho de mantener el emisor junto al módulo no modifica el ataque \textit{batch GCD}, pero resulta importante desde el punto de vista del análisis posterior. Si se detectan factores compartidos, disponer del emisor permite estudiar si los módulos afectados se concentran en una autoridad certificadora, en una cadena concreta o en certificados relacionados. Por tanto, la extracción no se limita a preparar una lista de enteros, sino que conserva información contextual suficiente para interpretar los resultados.
+\\
+\\
+La extracción se diseñó de forma incremental y tolerante a fallos. Cada archivo comprimido se registra como procesado, fallido o pendiente. Además, los casos que aparentemente no contienen carpeta \texttt{issuer/} se revisan con especial cuidado, ya que una descarga parcial puede provocar que el archivo local no sea un ZIP válido y lleve a una clasificación incorrecta. En esos casos, el archivo parcial se conserva como evidencia y se fuerza una nueva descarga antes de decidir si realmente carece de información útil.
+\\
+\\
+Durante esta campaña se observó precisamente este tipo de situación: algunos archivos marcados inicialmente como carentes de \texttt{issuer/} resultaron ser descargas incompletas. Al revisarlos, se comprobó que no eran ZIPs válidos y se reprocesaron de forma conservadora. Esta comprobación es relevante porque evita descartar partes del conjunto de datos por un problema de descarga, y muestra que la fase de preparación de datos no es un paso meramente mecánico, sino una parte crítica de la validez experimental.
+\\
+\\
+En el momento de redactar esta versión, la extracción de los logs seleccionados se encuentra en curso. Los resultados parciales ya superan ampliamente el tamaño de la muestra local utilizada para validar el binario, con decenas de miles de pares módulo-emisor y varios miles de módulos únicos por log. No obstante, estos valores deben considerarse provisionales hasta que finalice la descarga, se reparen los archivos parciales y se reconstruya el conjunto global de módulos únicos.
+\\
+\\
+El resultado final de esta fase será el archivo de entrada utilizado para la ejecución en Altamira. En esa ejecución se registrarán el número total de certificados inspeccionados, el número de módulos RSA extraídos, el número de módulos únicos tras deduplicar, el tiempo de ejecución del algoritmo, el consumo de memoria y, en caso de aparecer, los módulos vulnerables junto con los factores compartidos encontrados.
+
+\section{Discusión}
+
+Los resultados obtenidos permiten extraer varias conclusiones. En primer lugar, la reproducción reducida del experimento de Pelofske confirma la ventaja práctica del algoritmo \textit{Binary Tree Batch GCD} frente al enfoque clásico basado en \textit{remainder tree}. Aunque nuestra parrilla de tamaños es más pequeña que la del artículo original, la tendencia observada es consistente: el algoritmo de árbol binario reduce de forma clara el tiempo de ejecución.
+\\
+\\
+En segundo lugar, la implementación C++/GMP desarrollada en este trabajo mejora de manera notable a las implementaciones Python originales. Esta mejora era esperable por el uso de una biblioteca multiprecisión optimizada y por el mayor control sobre la gestión de memoria, pero los resultados cuantifican su impacto práctico. En los casos más grandes evaluados, la diferencia entre completar el análisis en varios minutos o en pocos segundos es relevante de cara a una futura ejecución sobre conjuntos reales de mayor tamaño.
+\\
+\\
+En tercer lugar, la variación de \(\texttt{WEAK}\) muestra que el rendimiento del algoritmo de árbol binario depende en cierta medida del número de factores compartidos presentes en el conjunto. Esto es importante para el problema real, ya que en colecciones de certificados auténticas se espera que los factores compartidos sean eventos poco frecuentes. En ese escenario, precisamente, el algoritmo de Pelofske debería comportarse de forma especialmente favorable.
+\\
+\\
+La principal limitación de esta fase experimental es el tamaño de la parrilla de \(N\) y el alcance de la ejecución real local. La reproducción completa de la figura del artículo requeriría alcanzar 75000 módulos para RSA-2048 y 120000 módulos para RSA-1024, además de repetir cada punto para los tres valores de \(\texttt{WEAK}\) y, en nuestro caso, para tres implementaciones distintas. Ejecutar esa campaña completa en un portátil no resulta práctico, especialmente por el coste de las implementaciones Python. Del mismo modo, la muestra local de 601 módulos reales sirve para validar el procedimiento, pero no sustituye a la campaña completa sobre los certificados recopilados. Por ello, en este TFM se conserva la estructura experimental del artículo, se valida el flujo con datos reales, se prepara una extracción incremental de módulos desde \textit{CT logs} y se organiza la ejecución masiva sobre el conjunto final en Altamira.

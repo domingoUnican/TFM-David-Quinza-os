@@ -1,0 +1,2 @@
+modulos_unicos_brutos,modulos_rsa_plausibles,modulos_descartados_validacion,logs_ct_archive,logs_incompletos,gcds_no_triviales_fase_1,claves_vulnerables,tiempo_fase_1_ms,tiempo_fase_2_ms,tiempo_fase_3_ms,tiempo_total_algoritmo_ms,tiempo_total_notebook_s,modulos_unicos
+54278,54275,3,20,0,0,0,23753.25,0.0,2.96,23756.22,24.234794916999817,54275

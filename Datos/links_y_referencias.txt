@@ -1,0 +1,12 @@
+Repositorios de interés:
+
+Datos de todos los certificados (para descargarlos por internet):
+https://github.com/geomys/ct-archive
+
+
+Acceder por base de datos:
+psql -h crt.sh -p 5432 -U guest certwatch
+(ver el link: https://groups.google.com/g/crtsh/c/sUmV0mBz8bQ/m/_MvHXuPeDAAJ)
+
+
+

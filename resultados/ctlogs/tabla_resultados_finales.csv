@@ -1,0 +1,9 @@
+Métrica,Valor
+Módulos RSA únicos brutos,54278.0
+Módulos RSA plausibles analizados,54275.0
+Módulos descartados en validación,3.0
+Logs CT con módulos extraídos,20.0
+Logs incompletos al ejecutar,0.0
+GCDs no triviales en fase 1,0.0
+Claves vulnerables detectadas,0.0
+Tiempo total del algoritmo (s),23.756220000000003

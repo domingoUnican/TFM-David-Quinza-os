@@ -111,7 +111,9 @@
 % Referencias
 \RequirePackage[sort,square,\opcionesnatbib]{natbib}
 \renewcommand\bibsection{\chapter*{\bibname}}
-\bibliographystyle{abbrvnat_trucado}
+\IfFileExists{abbrvnat_trucado.bst}
+  {\bibliographystyle{abbrvnat_trucado}}
+  {\bibliographystyle{memoria/abbrvnat_trucado}}
 
 % Encabezamientos y pies de página
 \RequirePackage{fancyhdr}
@@ -149,7 +151,9 @@
   \thispagestyle{empty}
   \thispdfpagelabel{prt}
   \begin{center}
-  \includegraphics[width=29.1mm]{../figuras/UC.png}\vspace{5mm}\par
+  \IfFileExists{../figuras/UC.png}
+    {\includegraphics[width=29.1mm]{../figuras/UC.png}}
+    {\includegraphics[width=29.1mm]{figuras/UC.png}}\vspace{5mm}\par
   {\fuented Facultad de Ciencias}\vspace{2cm}\par
   {\fuentee \@titulo}\vspace{5mm}\par
   {\fuentec \@ingles}\vspace{2cm}\par

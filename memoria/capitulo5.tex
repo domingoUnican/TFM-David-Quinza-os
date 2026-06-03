@@ -1,6 +1,6 @@
 \chapter{Resultados y discusión}
 
-En este capítulo presentamos los resultados obtenidos a partir de la metodología descrita anteriormente. La evaluación se organiza en dos partes. En primer lugar, se estudia el comportamiento de los algoritmos sobre datos sintéticos generados de forma controlada, siguiendo la estructura experimental del artículo de Pelofske. En segundo lugar, se aplica la implementación desarrollada a módulos RSA reales extraídos de \textit{Certificate Transparency logs}. Esta segunda parte incluye una validación local sobre una muestra ya normalizada y la preparación de una campaña de mayor escala basada en módulos extraídos incrementalmente de \textit{CT logs}.
+En este capítulo presentamos los resultados obtenidos a partir de la metodología descrita anteriormente. La evaluación se organiza en dos partes. En primer lugar, se estudia el comportamiento de los algoritmos sobre datos sintéticos generados de forma controlada, siguiendo la estructura experimental del artículo de Pelofske. En segundo lugar, se aplica la implementación desarrollada a módulos RSA reales extraídos de \textit{Certificate Transparency logs}. Esta segunda parte incluye la extracción y consolidación de módulos reales, su validación y la ejecución final del ataque \textit{batch GCD} sobre el conjunto deduplicado.
 \\
 \\
 El objetivo principal de la primera parte no es únicamente comprobar que la implementación desarrollada funciona correctamente, sino también comparar su comportamiento con las implementaciones Python del repositorio original. De este modo, la evaluación permite estudiar tres aspectos complementarios: la diferencia entre el enfoque clásico basado en \textit{remainder tree} y el algoritmo \textit{Binary Tree Batch GCD}, el efecto de trasladar este último a C++ con GMP, y la influencia del número de claves débiles introducidas en el conjunto.
@@ -99,78 +99,113 @@ En cambio, el efecto de \(\texttt{WEAK}\) sí es más visible en el algoritmo de
 \\
 Este comportamiento encaja con la interpretación del propio artículo de Pelofske. El algoritmo \textit{Binary Tree Batch GCD} resulta especialmente ventajoso cuando el número de factores compartidos es pequeño en comparación con el tamaño total del conjunto. A medida que aumenta el número de módulos débiles, la ventaja se reduce parcialmente, aunque el algoritmo sigue siendo claramente más eficiente que el enfoque clásico en todas las configuraciones evaluadas.
 
-\section{Aplicación a datos reales}
+\section{Extracción y consolidación de módulos reales}
 
-Una vez validado el comportamiento sobre datos sintéticos y comparado con las implementaciones de referencia, el siguiente paso consiste en aplicar el algoritmo a certificados reales. Esta parte es la que conecta directamente con el objetivo aplicado del TFM: utilizar el nuevo algoritmo para buscar factores RSA compartidos en certificados extraídos de \textit{CT logs}.
+Una vez validado el comportamiento sobre datos sintéticos y comparado con las implementaciones de referencia, el siguiente paso consiste en aplicar el algoritmo a módulos RSA reales. Esta parte es la que conecta directamente con el objetivo aplicado del TFM: utilizar el nuevo algoritmo para buscar factores RSA compartidos en certificados extraídos de \textit{CT logs}.
 \\
 \\
-La primera validación se realizó en el entorno local con una muestra ya extraída y normalizada en un archivo de texto comprimido. Tras descomprimirlo, el archivo contiene registros procedentes de certificados X.509, incluyendo el emisor y el módulo cuando la clave pública es RSA. Dentro de esta muestra aparecen 112230 registros de certificado: 87462 contienen un módulo RSA y 24768 corresponden a claves para las que no se obtiene módulo RSA. Al eliminar duplicados, el conjunto utilizado por el algoritmo quedó reducido a 601 módulos RSA únicos. De ellos, 318 corresponden a módulos de 2048 bits, 94 a módulos de 3072 bits y 189 a módulos de 4096 bits.
+La fuente principal utilizada para esta fase fue \textit{ct-archive}, una colección pública de volcados de \textit{Certificate Transparency logs} organizada por log y por archivos ZIP \cite{geomys2026ctarchive}. El procedimiento no descarga toda la colección de forma permanente. En su lugar, procesa los archivos comprimidos de forma incremental: descarga un ZIP, extrae únicamente los certificados situados bajo la carpeta \texttt{issuer/}, obtiene con OpenSSL el módulo RSA y el emisor de cada certificado, registra los resultados intermedios y libera el archivo comprimido cuando deja de ser necesario.
 \\
 \\
+Esta decisión es importante porque reduce de forma considerable el volumen de datos que debe conservarse en disco. Para el objetivo de este trabajo no es necesario recorrer todas las entradas de los logs ni procesar las hojas completas del árbol de Merkle: basta con extraer los certificados de emisores disponibles en \texttt{issuer/}, ya que de ellos se obtienen los módulos RSA que se van a analizar. Los logs marcados en el repositorio como carentes de esta información no se utilizan por esta vía rápida, puesto que requerirían un tratamiento distinto basado en las entradas completas del log.
+\\
+\\
+El proceso de extracción se diseñó de forma conservadora. Cada ZIP queda clasificado como procesado, fallido o sin carpeta \texttt{issuer/}. Los casos aparentemente vacíos se revisan antes de descartarse, porque una descarga parcial o un problema al inspeccionar archivos grandes puede hacer que un ZIP válido parezca no contener la ruta esperada. Durante la ejecución se observaron incidencias de este tipo, especialmente en archivos grandes que requerían soporte adecuado para Zip64. Por ello se revisaron de forma específica logs como \texttt{ct\_sectigo\_elephant2025h2} y \texttt{ct\_sectigo\_tiger2025h2}, evitando clasificar como inútiles archivos que en realidad estaban incompletos o no habían sido inspeccionados correctamente.
+\\
+\\
+Además de los módulos extraídos desde \textit{ct-archive}, se consolidaron también los ficheros proporcionados previamente durante el trabajo. Todos los módulos se normalizaron al mismo formato hexadecimal y se deduplicaron globalmente. Esta deduplicación es necesaria porque un mismo módulo puede aparecer en distintos certificados, en distintos logs o en distintas fuentes de entrada. Repetirlo varias veces no aporta información criptográfica nueva para el ataque \textit{batch GCD} y solo aumentaría artificialmente el tamaño del problema.
+\\
+\\
+El conjunto consolidado final contiene 54.278 módulos únicos brutos. Tras aplicar una validación básica, que descarta valores no plausibles como módulos RSA por tamaño o paridad, quedan 54.275 módulos RSA plausibles. En concreto, se descartaron tres valores: dos por ser pares y uno por tener una longitud inferior al umbral considerado. La Tabla~\ref{tab:modulos_reales_finales} resume el conjunto real utilizado.
+
 \begin{table}[htbp]
     \centering
     \small
     \begin{tabular}{|l|r|}
         \hline
-        Elemento de la muestra local & Valor \\
+        Elemento & Valor \\
         \hline
-        Registros de certificado analizados & 112230 \\
-        Registros con módulo RSA & 87462 \\
-        Registros sin módulo RSA & 24768 \\
-        Módulos RSA únicos utilizados & 601 \\
-        Módulos RSA-2048 únicos & 318 \\
-        Módulos RSA-3072 únicos & 94 \\
-        Módulos RSA-4096 únicos & 189 \\
+        Módulos únicos brutos & 54278 \\
+        Módulos RSA plausibles & 54275 \\
+        Módulos descartados en validación & 3 \\
+        Logs de \textit{ct-archive} resumidos & 20 \\
+        Logs incompletos al finalizar la extracción & 0 \\
         \hline
     \end{tabular}
-    \caption{Resumen de la muestra real utilizada en la validación local.}
-    \label{tab:muestra_real}
+    \caption{Resumen del conjunto real de módulos RSA consolidado.}
+    \label{tab:modulos_reales_finales}
 \end{table}
 
-La ejecución del binario \texttt{batch\_gcd\_real} sobre esta muestra confirmó que el programa podía procesar correctamente módulos RSA reales en el mismo formato utilizado para los experimentos sintéticos. La ejecución se realizó en modo secuencial, sin OpenMP, y cargó 601 módulos RSA. El árbol binario construido tuvo 10 niveles, no se encontraron \textit{gcd} no triviales durante la construcción y la fase final no detectó claves vulnerables. El tiempo total del algoritmo fue de 107,17 milisegundos.
-\\
-\\
-Este resultado no debe interpretarse como una conclusión general sobre la seguridad de los \textit{CT logs}. La muestra local es pequeña en comparación con los estudios previos y también con el conjunto completo disponible para la siguiente fase del trabajo. Su utilidad principal es validar el flujo completo: extracción de certificados, filtrado de claves RSA, normalización de módulos, eliminación de duplicados y ejecución del algoritmo sobre datos reales.
-\[
-\mbox{\texttt{real\_moduli.txt}} \longrightarrow \mbox{\texttt{batch\_gcd\_real}} \longrightarrow \mbox{factores compartidos detectados}
-\]
-El conjunto real analizado contiene 87462 registros con módulo RSA antes de eliminar duplicados. Un análisis ingenuo de todos los pares posibles sobre esos módulos requeriría
-\[
-\frac{87462 \cdot 87461}{2} = 3824756991
-\]
-comparaciones de máximo común divisor, lo que justifica la necesidad de utilizar un enfoque \textit{batch GCD}. En la práctica, además, se eliminan duplicados antes de ejecutar el algoritmo, ya que repetir varias veces el mismo módulo no aporta información nueva sobre factores compartidos y solo aumenta artificialmente el coste del análisis.
+La distribución por tamaño de los módulos plausibles se muestra en la Tabla~\ref{tab:distribucion_bits_reales}. La mayoría de los módulos corresponden a claves RSA de 2048 bits, aunque también aparecen claves de 1024, 3072 y 4096 bits, además de algunos tamaños ligeramente distintos.
 
-\section{Preparación de la campaña sobre \textit{CT logs}}
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{|r|r|}
+        \hline
+        Tamaño del módulo & Módulos RSA plausibles \\
+        \hline
+        1024 bits & 9 \\
+        2045 bits & 1 \\
+        2048 bits & 53539 \\
+        3072 bits & 204 \\
+        4036 bits & 1 \\
+        4096 bits & 521 \\
+        \hline
+    \end{tabular}
+    \caption{Distribución por tamaño de los módulos RSA plausibles analizados.}
+    \label{tab:distribucion_bits_reales}
+\end{table}
 
-La muestra anterior permitió validar el flujo de extremo a extremo, pero no representa todavía el objetivo aplicado completo del trabajo. Para aproximarnos a una ejecución más realista se preparó una campaña de extracción de módulos a partir de \textit{ct-archive}, una colección pública de volcados de \textit{Certificate Transparency logs}. Esta fuente proporciona los datos organizados por log y por archivos comprimidos, lo que permite trabajar por partes sin necesidad de almacenar simultáneamente toda la colección.
+Si se intentase analizar este conjunto mediante una estrategia ingenua, habría que calcular el máximo común divisor para todos los pares posibles de módulos:
+\[
+\frac{54275 \cdot 54274}{2} = 1472860675
+\]
+comparaciones. Aunque este tamaño es mucho menor que los conjuntos masivos considerados en estudios previos, sigue siendo suficiente para justificar el uso de un enfoque \textit{batch GCD} frente a la comparación exhaustiva par a par.
+
+\section{Ejecución del ataque sobre módulos reales}
+
+El conjunto de 54.275 módulos RSA plausibles se procesó con la implementación C++/GMP desarrollada en este trabajo. En esta ejecución se utilizó soporte OpenMP, con 18 hilos disponibles en el entorno local. El programa cargó los módulos normalizados, construyó el árbol binario de productos con cálculo de \textit{gcd} en línea, agregó los divisores comunes encontrados en la variable \(B\) y realizó la enumeración final sobre todos los módulos.
 \\
 \\
-En esta fase se seleccionaron logs de DigiCert hasta \texttt{wyvern2025h1}, incluido. Para cada log, el procedimiento descarga los archivos ZIP correspondientes y extrae únicamente los certificados situados bajo las rutas \texttt{issuer/} o \texttt{issuers/}. A partir de cada certificado se obtiene el módulo de la clave pública RSA y el emisor. La salida intermedia mantiene los pares \texttt{modulo||issuer}, mientras que la entrada final para el algoritmo se construye eliminando duplicados y conservando un único módulo hexadecimal por línea.
+La Tabla~\ref{tab:ataque_real} recoge los principales resultados de la ejecución. Durante la construcción del árbol no se obtuvo ningún \textit{gcd} no trivial, por lo que la variable agregada \(B\) quedó con longitud de 1 bit. En consecuencia, la fase final tampoco detectó claves vulnerables. El tiempo total del algoritmo fue de 23.756,22 milisegundos, es decir, aproximadamente 23,8 segundos.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{|l|r|}
+        \hline
+        Elemento de la ejecución & Valor \\
+        \hline
+        Módulos RSA analizados & 54275 \\
+        Hilos OpenMP utilizados & 18 \\
+        Niveles del árbol construido & 16 \\
+        \textit{GCDs} no triviales en fase 1 & 0 \\
+        Claves vulnerables detectadas & 0 \\
+        Tiempo fase 1 & 23753,25 ms \\
+        Tiempo fase 2 & 0,00 ms \\
+        Tiempo fase 3 & 2,96 ms \\
+        Tiempo total del algoritmo & 23756,22 ms \\
+        \hline
+    \end{tabular}
+    \caption{Resultado del ataque \textit{Binary Tree Batch GCD} sobre módulos reales.}
+    \label{tab:ataque_real}
+\end{table}
+
+El resultado debe interpretarse de forma precisa. En el conjunto real analizado no se han encontrado factores RSA compartidos ni claves vulnerables. Esto no implica que no existan factores compartidos en otros \textit{CT logs} ni en el conjunto completo de certificados publicados en Internet, sino únicamente que no se han detectado dentro del subconjunto extraído, normalizado y deduplicado en este trabajo.
 \\
 \\
-El hecho de mantener el emisor junto al módulo no modifica el ataque \textit{batch GCD}, pero resulta importante desde el punto de vista del análisis posterior. Si se detectan factores compartidos, disponer del emisor permite estudiar si los módulos afectados se concentran en una autoridad certificadora, en una cadena concreta o en certificados relacionados. Por tanto, la extracción no se limita a preparar una lista de enteros, sino que conserva información contextual suficiente para interpretar los resultados.
-\\
-\\
-La extracción se diseñó de forma incremental y tolerante a fallos. Cada archivo comprimido se registra como procesado, fallido o pendiente. Además, los casos que aparentemente no contienen carpeta \texttt{issuer/} se revisan con especial cuidado, ya que una descarga parcial puede provocar que el archivo local no sea un ZIP válido y lleve a una clasificación incorrecta. En esos casos, el archivo parcial se conserva como evidencia y se fuerza una nueva descarga antes de decidir si realmente carece de información útil.
-\\
-\\
-Durante esta campaña se observó precisamente este tipo de situación: algunos archivos marcados inicialmente como carentes de \texttt{issuer/} resultaron ser descargas incompletas. Al revisarlos, se comprobó que no eran ZIPs válidos y se reprocesaron de forma conservadora. Esta comprobación es relevante porque evita descartar partes del conjunto de datos por un problema de descarga, y muestra que la fase de preparación de datos no es un paso meramente mecánico, sino una parte crítica de la validez experimental.
-\\
-\\
-En el momento de redactar esta versión, la extracción de los logs seleccionados se encuentra en curso. Los resultados parciales ya superan ampliamente el tamaño de la muestra local utilizada para validar el binario, con decenas de miles de pares módulo-emisor y varios miles de módulos únicos por log. No obstante, estos valores deben considerarse provisionales hasta que finalice la descarga, se reparen los archivos parciales y se reconstruya el conjunto global de módulos únicos.
-\\
-\\
-El resultado final de esta fase será el archivo de entrada utilizado para la ejecución en Altamira. En esa ejecución se registrarán el número total de certificados inspeccionados, el número de módulos RSA extraídos, el número de módulos únicos tras deduplicar, el tiempo de ejecución del algoritmo, el consumo de memoria y, en caso de aparecer, los módulos vulnerables junto con los factores compartidos encontrados.
+Desde el punto de vista metodológico, la ejecución confirma que la implementación puede utilizarse sobre datos reales y no solo sobre conjuntos sintéticos. La extracción de módulos, la validación de formato, la eliminación de duplicados y el ataque \textit{batch GCD} se integran en un flujo completo que produce un resultado reproducible sobre certificados procedentes de \textit{Certificate Transparency}.
 
 \section{Discusión}
 
 Los resultados obtenidos permiten extraer varias conclusiones. En primer lugar, la reproducción reducida del experimento de Pelofske confirma la ventaja práctica del algoritmo \textit{Binary Tree Batch GCD} frente al enfoque clásico basado en \textit{remainder tree}. Aunque nuestra parrilla de tamaños es más pequeña que la del artículo original, la tendencia observada es consistente: el algoritmo de árbol binario reduce de forma clara el tiempo de ejecución.
 \\
 \\
-En segundo lugar, la implementación C++/GMP desarrollada en este trabajo mejora de manera notable a las implementaciones Python originales. Esta mejora era esperable por el uso de una biblioteca multiprecisión optimizada y por el mayor control sobre la gestión de memoria, pero los resultados cuantifican su impacto práctico. En los casos más grandes evaluados, la diferencia entre completar el análisis en varios minutos o en pocos segundos es relevante de cara a una futura ejecución sobre conjuntos reales de mayor tamaño.
+En segundo lugar, la implementación C++/GMP desarrollada en este trabajo mejora de manera notable a las implementaciones Python originales. Esta mejora era esperable por el uso de una biblioteca multiprecisión optimizada y por el mayor control sobre la gestión de memoria, pero los resultados cuantifican su impacto práctico. En los casos más grandes evaluados, la diferencia entre completar el análisis en varios minutos o en pocos segundos es relevante de cara a su aplicación sobre conjuntos reales.
 \\
 \\
 En tercer lugar, la variación de \(\texttt{WEAK}\) muestra que el rendimiento del algoritmo de árbol binario depende en cierta medida del número de factores compartidos presentes en el conjunto. Esto es importante para el problema real, ya que en colecciones de certificados auténticas se espera que los factores compartidos sean eventos poco frecuentes. En ese escenario, precisamente, el algoritmo de Pelofske debería comportarse de forma especialmente favorable.
 \\
 \\
-La principal limitación de esta fase experimental es el tamaño de la parrilla de \(N\) y el alcance de la ejecución real local. La reproducción completa de la figura del artículo requeriría alcanzar 75000 módulos para RSA-2048 y 120000 módulos para RSA-1024, además de repetir cada punto para los tres valores de \(\texttt{WEAK}\) y, en nuestro caso, para tres implementaciones distintas. Ejecutar esa campaña completa en un portátil no resulta práctico, especialmente por el coste de las implementaciones Python. Del mismo modo, la muestra local de 601 módulos reales sirve para validar el procedimiento, pero no sustituye a la campaña completa sobre los certificados recopilados. Por ello, en este TFM se conserva la estructura experimental del artículo, se valida el flujo con datos reales, se prepara una extracción incremental de módulos desde \textit{CT logs} y se organiza la ejecución masiva sobre el conjunto final en Altamira.
+La principal limitación de esta fase experimental es el tamaño de la parrilla de \(N\) y el alcance del conjunto real analizado. La reproducción completa de la figura del artículo requeriría alcanzar 75000 módulos para RSA-2048 y 120000 módulos para RSA-1024, además de repetir cada punto para los tres valores de \(\texttt{WEAK}\) y, en nuestro caso, para tres implementaciones distintas. Ejecutar esa campaña completa en un portátil no resulta práctico, especialmente por el coste de las implementaciones Python. Del mismo modo, los 54.275 módulos reales analizados permiten validar y aplicar el flujo completo, pero no agotan el espacio de certificados existente en todos los \textit{CT logs}. Por ello, los resultados reales deben entenderse como una auditoría acotada al conjunto extraído y consolidado en este trabajo.

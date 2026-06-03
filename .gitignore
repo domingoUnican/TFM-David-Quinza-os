@@ -9,6 +9,7 @@ __pycache__/
 
 # LaTeX build artifacts
 *.aux
+*.bbl
 *.blg
 *.log
 *.out

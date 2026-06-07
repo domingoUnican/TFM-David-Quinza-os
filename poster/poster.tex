@@ -2,13 +2,16 @@
 %== Poster TFM — David Quinzaños Saiz ==========================================
 %==============================================================================
 
-\documentclass{article}
+\documentclass[final,24pt]{article}
+
+
 
 \usepackage[
   paperwidth=84.1cm,
   paperheight=118.9cm,
   margin=2.5cm
 ]{geometry}
+
 
 \usepackage[utf8]{inputenc}
 \usepackage[spanish,es-tabla]{babel}
@@ -76,10 +79,12 @@
     \fontsize{40}{48}\selectfont un enfoque basado en Binary Tree Batch GCD\par}
     \vspace{0.45cm}
     {\color{white}\fontsize{29}{35}\selectfont
-    David Quinzaños Saiz, Ana I. Gómez Pérez, Domingo Gómez Pérez\par}
+    David Quinzaños Saiz, Ana I. Gómez, Domingo Gómez-Pérez Pérez, Daniel Sadornil Renedo\par}
     \vspace{0.2cm}
     {\color{white}\fontsize{24}{29}\selectfont
     Departamento de Matemáticas, Estadística y Computación — Universidad de Cantabria\par}
+   %   {\color{white}\fontsize{24}{29}\selectfont
+    %Departamento de Informática y Estadística — Universidad Rey Juan Carlos\par}
   \end{minipage}%
   \begin{minipage}{0.13\textwidth}
     \centering
@@ -135,7 +140,7 @@ tiene un coste elevado.
 
 \begin{center}
 \begin{tikzpicture}[
-  scale=1.14,
+  scale=1.40,
   transform shape,
   node distance=0.82cm and 0.82cm,
   box/.style={rectangle, draw=posterblue!70, fill=posterblue!12, very thick,
@@ -172,6 +177,7 @@ tiene un coste elevado.
 \node[font=\scriptsize\bfseries, text=posterblue, left=0.35cm of p12] {Product tree};
 \node[font=\scriptsize\bfseries, text=red!70!black, left=0.35cm of r12] {Remainder tree};
 \end{tikzpicture}
+caption{}
 \end{center}
 
 \textit{Binary Tree Batch GCD} elimina el \textit{remainder tree} completo:

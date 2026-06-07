@@ -1,33 +1,52 @@
 \chapter{Introducción}
 
+\section{Contexto y motivación}
+
 La necesidad de proteger la información y las comunicaciones ha existido desde hace siglos. Ya en la Antigüedad se empleaban métodos sencillos para dificultar la lectura de los mensajes por parte de terceros, y más adelante, durante la Segunda Guerra Mundial, máquinas como Enigma demostraron hasta qué punto la criptografía podía ser decisiva en contextos militares y estratégicos.
 \\
 \\
 Sin embargo, todos estos métodos compartían una característica común: se trataba de sistemas de criptografía simétrica, es decir, emisor y receptor debían conocer previamente la misma clave secreta. Este enfoque puede funcionar en escenarios reducidos, pero plantea problemas evidentes cuando el número de usuarios crece. En el contexto actual, donde millones de personas se conectan continuamente a servicios en Internet, repartir de forma segura una misma clave entre todas las partes resulta inviable.
 \\
 \\
-Para dar respuesta a este problema surgió la criptografía asimétrica, basada en el uso de dos claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto \cite{rivest1978method}. Gracias a este modelo, hoy es posible establecer comunicaciones seguras sin necesidad de haber intercambiado previamente una clave secreta. Además, la criptografía asimétrica permite no solo cifrar información, sino también autenticar identidades y firmar digitalmente mensajes, por lo que se ha convertido en una herramienta fundamental dentro de la seguridad informática.
+Para dar respuesta a este problema surgió la criptografía asimétrica, basada en el uso de dos claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto \citep{rivest1978method}. Gracias a este modelo, hoy es posible establecer comunicaciones seguras sin necesidad de haber intercambiado previamente una clave secreta. Además, la criptografía asimétrica permite no solo cifrar información, sino también autenticar identidades y firmar digitalmente mensajes, por lo que se ha convertido en una herramienta fundamental dentro de la seguridad informática.
 \\
 \\
-Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados históricamente ha sido RSA. Su seguridad se basa en la dificultad de factorizar números enteros grandes obtenidos como producto de dos números primos también grandes \cite{rivest1978method}. En condiciones normales, esta dificultad hace que obtener la clave privada a partir de la clave pública resulte inviable en la práctica. Por ello, RSA ha ocupado durante muchos años un papel central dentro de la infraestructura de clave pública y de los certificados digitales utilizados en la Web.
+La criptografía moderna combina estas primitivas asimétricas con algoritmos simétricos, funciones resumen, códigos de autenticación y protocolos diseñados para alcanzar propiedades concretas de confidencialidad, integridad y autenticación \citep{menezes1996handbook}. En una conexión web actual, por ejemplo, la criptografía de clave pública permite autenticar al servidor y acordar secretos, mientras que el intercambio posterior de datos se protege con cifrado simétrico por su mayor eficiencia. Por ello, la seguridad práctica no depende de un único algoritmo, sino de la correcta composición de claves, certificados, protocolos e implementaciones.
 \\
 \\
-No obstante, la seguridad de RSA no depende únicamente de su fundamento matemático, sino también de cómo se generan las claves en la práctica. Trabajos previos han mostrado que errores en este proceso pueden dar lugar a claves vulnerables, lo que convierte el análisis de implementaciones reales en una cuestión especialmente relevante desde el punto de vista de la ciberseguridad \cite{heninger2012mining,vage2022finding,pelofske2024efficient}.
+Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados históricamente ha sido RSA. Su seguridad se basa en la dificultad de factorizar números enteros grandes obtenidos como producto de dos números primos también grandes \citep{rivest1978method}. En condiciones normales, esta dificultad hace que obtener la clave privada a partir de la clave pública resulte inviable en la práctica. Por ello, RSA ha ocupado durante muchos años un papel central dentro de la infraestructura de clave pública y de los certificados digitales utilizados en la Web.
 \\
 \\
-En este contexto, los \textit{Certificate Transparency logs} o \textit{CT logs} constituyen una fuente de información especialmente interesante, ya que permiten acceder a grandes volúmenes de certificados reales emitidos para sitios web. Esto los convierte en una base de datos muy valiosa para estudiar cómo se está desplegando realmente la criptografía en Internet y para detectar posibles debilidades en claves públicas utilizadas en la práctica \cite{vage2022finding}.
+No obstante, la seguridad de RSA no depende únicamente de su fundamento matemático, sino también de cómo se generan las claves en la práctica. Trabajos previos han mostrado que errores en este proceso pueden dar lugar a claves vulnerables, lo que convierte el análisis de implementaciones reales en una cuestión especialmente relevante desde el punto de vista de la ciberseguridad \citep{heninger2012mining,vage2022finding,pelofske2024efficient}.
 \\
 \\
-La tesis en la que se apoya este trabajo, \textit{Finding shared RSA factors in the Certificate Transparency logs}, mostró precisamente el interés de este enfoque y puso de manifiesto que todavía existe margen para seguir ampliando este tipo de análisis sobre conjuntos de datos aún mayores \cite{vage2022finding}. Por otro lado, el artículo de Pelofske propone el algoritmo \textit{Binary Tree Batch GCD} como una alternativa más eficiente al enfoque clásico basado en \textit{product tree} y \textit{remainder tree} \cite{pelofske2024efficient}.
+En este contexto, los \textit{Certificate Transparency logs} o \textit{CT logs} constituyen una fuente de información especialmente interesante, ya que permiten acceder a grandes volúmenes de certificados reales emitidos para sitios web. Esto los convierte en una base de datos muy valiosa para estudiar cómo se está desplegando realmente la criptografía en Internet y para detectar posibles debilidades en claves públicas utilizadas en la práctica \citep{vage2022finding}.
 \\
 \\
-Partiendo de estas dos referencias, en este Trabajo de Fin de Máster se sigue una estrategia en tres niveles. En primer lugar, se reproduce de forma reducida la comparación experimental presentada en el artículo de Pelofske, con el fin de estudiar en un entorno controlado el comportamiento relativo del método clásico y del algoritmo \textit{Binary Tree Batch GCD}. En segundo lugar, se desarrolla una implementación propia en C++17 orientada a ejecutar este algoritmo de forma más eficiente sobre módulos RSA reales. Por último, se conecta esa implementación con el objetivo aplicado del trabajo: analizar módulos extraídos de \textit{CT logs} mediante el nuevo algoritmo.
+Los trabajos previos mostraron el interés de este enfoque y señalaron que todavía existe margen para ampliar el análisis sobre conjuntos de datos mayores \citep{vage2022finding}. Posteriormente se propuso el algoritmo \textit{Binary Tree Batch GCD} como una alternativa más eficiente al enfoque clásico basado en \textit{product tree} y \textit{remainder tree} \citep{pelofske2024efficient}.
 \\
 \\
-De este modo, el trabajo no se limita únicamente a revisar una propuesta reciente desde el punto de vista teórico, sino que combina reproducción experimental, desarrollo algorítmico e implementación aplicada. La comparativa sintética sirve para justificar que el algoritmo elegido mejora al enfoque clásico y para comprobar que nuestra implementación produce resultados compatibles con las versiones de referencia. La parte aplicada, en cambio, se orienta a ejecutar el ataque \textit{batch GCD} sobre módulos reales procedentes de \textit{Certificate Transparency}, obtenidos mediante un proceso de extracción, normalización y deduplicación.
+\section{Objetivos y alcance}
+
+El objetivo general de este trabajo será estudiar la detección eficiente de factores primos compartidos entre módulos RSA y aplicar esta técnica a certificados obtenidos de fuentes públicas de \textit{Certificate Transparency}. Para ello, se revisarán los fundamentos de esta vulnerabilidad y los métodos \textit{batch GCD} utilizados para detectarla, prestando especial atención al algoritmo \textit{Binary Tree Batch GCD} como alternativa al enfoque clásico basado en \textit{product tree} y \textit{remainder tree}.
 \\
 \\
-Desde el punto de vista de la ciberseguridad, este trabajo resulta relevante por varios motivos. Por un lado, nos permitirá estudiar una vulnerabilidad concreta pero con consecuencias graves, ya que una mala generación de claves puede comprometer completamente la seguridad de RSA. Por otro, nos situará en un escenario de análisis aplicado sobre datos reales, algo especialmente valioso en un ámbito donde no basta con que los algoritmos sean seguros en teoría, sino que también deben comportarse correctamente en la práctica.
+A partir de esta base, se reproducirá, a una escala compatible con los recursos disponibles, la comparación experimental de Pelofske. Se desarrollará una implementación propia en C++17 con GMP y se comprobará que sus resultados coinciden con los de las implementaciones Python de referencia. También se cuantificarán las diferencias de tiempo de ejecución y consumo máximo de memoria. Finalmente, se construirá un flujo para extraer, normalizar, validar y deduplicar módulos RSA procedentes de certificados reales, y se aplicará la implementación al conjunto consolidado. Los resultados se interpretarán de acuerdo con el alcance de los datos analizados y las limitaciones del diseño experimental.
 \\
 \\
-En este Trabajo de Fin de Máster se estudia el problema de la detección de claves RSA vulnerables a partir del análisis de certificados publicados en \textit{Certificate Transparency logs}, tomando como punto de partida una tesis previa y apoyándonos en un algoritmo más reciente y eficiente. A lo largo del documento presentaremos primero los fundamentos teóricos necesarios, revisaremos después el estado del arte, describiremos la metodología seguida, expondremos los resultados obtenidos sobre datos sintéticos y reales, y finalmente discutiremos las principales conclusiones y las posibles ampliaciones del trabajo.
+El trabajo combinará así revisión teórica, reproducción experimental, desarrollo algorítmico y aplicación sobre datos reales. Desde el punto de vista de la ciberseguridad, permitirá estudiar una vulnerabilidad concreta pero con consecuencias graves, ya que una generación deficiente de claves puede comprometer completamente la seguridad de RSA. Al mismo tiempo, situará el análisis en un escenario aplicado, en el que no basta con que los algoritmos sean seguros en teoría, sino que también deben poder evaluarse de forma eficiente sobre claves utilizadas en la práctica.
+\\
+\\
+\section{Estructura del documento}
+
+El resto del documento se organiza del siguiente modo. El
+Capítulo~2 presenta los fundamentos criptográficos necesarios para comprender
+RSA, la vulnerabilidad causada por la reutilización de factores primos y el
+papel de los certificados y de \textit{Certificate Transparency}. El
+Capítulo~3 revisa los principales trabajos previos relacionados con la
+detección de claves RSA vulnerables. El Capítulo~4 describe el algoritmo
+\textit{Binary Tree Batch GCD}, la implementación desarrollada y la metodología
+de preparación de los datos. El Capítulo~5 expone y analiza los resultados
+obtenidos sobre conjuntos sintéticos y sobre el conjunto real consolidado.
+Finalmente, el Capítulo~6 recoge las conclusiones del trabajo y las
+limitaciones identificadas.

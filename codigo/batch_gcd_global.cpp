@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
 
     std::cout << "[Fase 1] Producto global\n"
               << "  P bit-length         : " << mpz_sizeinbase(P.get_mpz_t(), 2) << " bits\n"
-              << "  CPU Time             : " << std::fixed << std::setprecision(2)
+              << "  Tiempo transcurrido  : " << std::fixed << std::setprecision(2)
               << std::chrono::duration<double, std::milli>(product_end - product_start).count()
               << " ms\n\n";
 
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 
     std::cout << "\n[Fase 2] GCD del chunk contra producto global\n"
               << "  Claves vulnerables   : " << found << "\n"
-              << "  CPU Time             : " << std::fixed << std::setprecision(2)
+              << "  Tiempo transcurrido  : " << std::fixed << std::setprecision(2)
               << std::chrono::duration<double, std::milli>(gcd_end - gcd_start).count()
               << " ms\n\n";
 

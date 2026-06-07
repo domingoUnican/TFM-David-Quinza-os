@@ -255,10 +255,10 @@
 \frenchspacing
 
 % Términos en español %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\renewcommand\spanishfigurename{Ilustración}
+\renewcommand\spanishfigurename{Figura}
 %\renewcommand\spanishchaptername{} % {Capítulo}
 \renewcommand\spanishcontentsname{Índice}
-\renewcommand\spanishlistfigurename{Índice de ilustraciones}
+\renewcommand\spanishlistfigurename{Índice de figuras}
 \renewcommand\spanishbibname{Referencias}
 
 \endinput

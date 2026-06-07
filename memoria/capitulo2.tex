@@ -9,10 +9,10 @@ No se pretende realizar aquí una exposición exhaustiva de toda la teoría crip
 
 \section{Fundamentos de RSA}
 
-RSA es uno de los algoritmos más conocidos de criptografía asimétrica y uno de los más influyentes en la historia de la seguridad informática \cite{rivest1978method}. A diferencia de la criptografía simétrica, donde emisor y receptor comparten la misma clave secreta, en criptografía asimétrica cada usuario dispone de un par de claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto.
+RSA es uno de los algoritmos más conocidos de criptografía asimétrica y uno de los más influyentes en la historia de la seguridad informática \citep{rivest1978method}. A diferencia de la criptografía simétrica, donde emisor y receptor comparten la misma clave secreta, en criptografía asimétrica cada usuario dispone de un par de claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto.
 \\
 \\
-Este modelo permitió resolver uno de los grandes problemas de la criptografía clásica, que era el intercambio seguro de claves en entornos abiertos. Gracias a ello, hoy es posible establecer comunicaciones seguras, autenticar identidades y firmar digitalmente información sin necesidad de que las partes hayan compartido previamente un secreto común \cite{rivest1978method}.
+Este modelo permitió resolver uno de los grandes problemas de la criptografía clásica, que era el intercambio seguro de claves en entornos abiertos. Gracias a ello, hoy es posible establecer comunicaciones seguras, autenticar identidades y firmar digitalmente información sin necesidad de que las partes hayan compartido previamente un secreto común \citep{rivest1978method}.
 \\
 \\
 En el caso de RSA, la seguridad del sistema se basa en la dificultad de factorizar un número entero grande obtenido como producto de dos números primos también grandes. Si denotamos estos primos por \(p\) y \(q\), el módulo RSA se construye como
@@ -45,7 +45,7 @@ y el descifrado mediante
 m \equiv c^d \;(\mathrm{mod}\ N)
 \]
 
-La fortaleza de RSA se apoya, por tanto, en que multiplicar dos primos grandes es sencillo, mientras que recuperar esos primos a partir únicamente de \(N\) es un problema computacionalmente muy costoso en condiciones normales \cite{rivest1978method}. Por este motivo, RSA ha sido durante muchos años uno de los algoritmos más utilizados en certificados digitales y en infraestructuras de clave pública dentro de la Web.
+La fortaleza de RSA se apoya, por tanto, en que multiplicar dos primos grandes es sencillo, mientras que recuperar esos primos a partir únicamente de \(N\) es un problema computacionalmente muy costoso en condiciones normales \citep{rivest1978method}. Por este motivo, RSA ha sido durante muchos años uno de los algoritmos más utilizados en certificados digitales y en infraestructuras de clave pública dentro de la Web.
 \\
 \\
 Sin embargo, esta seguridad práctica no depende únicamente de la dificultad general del problema de factorización. También depende de que los primos \(p\) y \(q\) se hayan generado correctamente, sean suficientemente grandes y, sobre todo, sean independientes de los utilizados por otras claves. Esta última idea será especialmente importante en este trabajo, ya que la presencia de factores compartidos entre módulos RSA supone una debilidad crítica que permite comprometer la seguridad del sistema sin necesidad de resolver el problema general de factorización.
@@ -96,19 +96,19 @@ En el contexto de este TFM, el máximo común divisor desempeña un doble papel.
 
 \section{Entropía y generación de claves RSA}
 
-Aunque RSA es un esquema sólido desde el punto de vista matemático, su seguridad práctica depende de que la generación de claves se realice correctamente. En particular, para construir una clave RSA segura es necesario que los números primos \(p\) y \(q\) se generen de manera suficientemente aleatoria e independiente. Si esta condición no se cumple, pueden aparecer relaciones inesperadas entre distintas claves públicas, incluyendo la reutilización accidental de factores primos \cite{heninger2012mining,vage2022finding,pelofske2024efficient}.
+Aunque RSA es un esquema sólido desde el punto de vista matemático, su seguridad práctica depende de que la generación de claves se realice correctamente. En particular, para construir una clave RSA segura es necesario que los números primos \(p\) y \(q\) se generen de manera suficientemente aleatoria e independiente. Si esta condición no se cumple, pueden aparecer relaciones inesperadas entre distintas claves públicas, incluyendo la reutilización accidental de factores primos \citep{heninger2012mining,vage2022finding,pelofske2024efficient}.
 \\
 \\
-En este contexto, la entropía hace referencia al grado de imprevisibilidad disponible en el sistema para alimentar el proceso de generación aleatoria. En un entorno bien diseñado, esa entropía permite producir candidatos a primos que sean efectivamente impredecibles. Sin embargo, en sistemas reales esto no siempre ocurre. Tal y como señalan tanto la tesis de Våge como el artículo de Pelofske, una baja entropía durante la fase de generación de primos puede hacer que distintas claves RSA compartan factores, lo que compromete completamente su seguridad \cite{vage2022finding,pelofske2024efficient}.
+En este contexto, la entropía hace referencia al grado de imprevisibilidad disponible en el sistema para alimentar el proceso de generación aleatoria. En un entorno bien diseñado, esa entropía permite producir candidatos a primos que sean efectivamente impredecibles. Sin embargo, en sistemas reales esto no siempre ocurre. Una baja entropía durante la generación de primos puede hacer que distintas claves RSA compartan factores, lo que compromete completamente su seguridad \citep{vage2022finding,pelofske2024efficient}.
 \\
 \\
-Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave \cite{pelofske2024efficient}. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque.
+Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave \citep{pelofske2024efficient}. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque.
 \\
 \\
-La tesis en la que se apoya este trabajo subraya que, en condiciones ideales, la probabilidad de que dos claves RSA distintas reutilicen un mismo primo dentro del enorme espacio de posibles primos de tamaño criptográfico es prácticamente nula \cite{vage2022finding}. Por eso, cuando en la práctica aparecen factores compartidos entre módulos públicos, no estamos ante una simple casualidad matemática, sino ante una señal muy clara de que ha existido un fallo en el proceso de generación.
+La tesis en la que se apoya este trabajo subraya que, en condiciones ideales, la probabilidad de que dos claves RSA distintas reutilicen un mismo primo dentro del enorme espacio de posibles primos de tamaño criptográfico es prácticamente nula \citep{vage2022finding}. Por eso, cuando en la práctica aparecen factores compartidos entre módulos públicos, no estamos ante una simple casualidad matemática, sino ante una señal muy clara de que ha existido un fallo en el proceso de generación.
 \\
 \\
-Además, este problema no es meramente teórico. Trabajos previos ya mostraron que la baja entropía y otros errores de implementación podían dar lugar a claves públicas vulnerables en sistemas reales, incluyendo dispositivos conectados a Internet \cite{heninger2012mining}. La tesis de Våge retoma esta línea de investigación aplicándola al análisis de certificados publicados en \textit{CT logs}, mientras que el artículo de Pelofske plantea un algoritmo más eficiente precisamente para atacar este tipo de situaciones a gran escala \cite{vage2022finding,pelofske2024efficient}.
+Además, este problema no es meramente teórico. Trabajos previos ya mostraron que la baja entropía y otros errores de implementación podían dar lugar a claves públicas vulnerables en sistemas reales, incluyendo dispositivos conectados a Internet \citep{heninger2012mining}. Esta línea de investigación se ha aplicado a certificados publicados en \textit{CT logs} y también ha motivado algoritmos más eficientes para analizar estas situaciones a gran escala \citep{vage2022finding,pelofske2024efficient}.
 \\
 \\
 Por tanto, la importancia de la entropía en este TFM es doble. Por un lado, explica el origen de la vulnerabilidad que queremos estudiar. Por otro, justifica por qué tiene sentido analizar grandes volúmenes de claves públicas reales en busca de factores compartidos. Si la generación de claves no se realiza siempre en condiciones ideales, entonces la auditoría empírica de la infraestructura criptográfica desplegada en Internet se convierte en una tarea especialmente relevante desde el punto de vista de la ciberseguridad.
@@ -120,19 +120,59 @@ Por tanto, la importancia de la entropía en este TFM es doble. Por un lado, exp
 Para poder estudiar este problema en sistemas reales es necesario contar con una fuente amplia y accesible de claves públicas. En este trabajo esa fuente serán los \textit{Certificate Transparency logs}, o \textit{CT logs}, que almacenan certificados digitales emitidos para dominios y servicios de Internet.
 \\
 \\
-Antes de explicar su utilidad, conviene recordar brevemente qué papel desempeñan los certificados digitales en la Web. Un certificado digital es un documento electrónico, normalmente en formato X.509, que vincula una clave pública con una determinada identidad o dominio. Estos certificados son emitidos por autoridades certificadoras dentro de la infraestructura de clave pública, o \textit{Public Key Infrastructure} (PKI), y permiten que un navegador u otro cliente verifique que la clave pública presentada por un servidor pertenece realmente a la entidad con la que dice comunicarse.
+Antes de explicar su utilidad, conviene recordar brevemente qué papel desempeñan las claves y los certificados digitales en la Web. Cada servidor conserva una clave privada que no debe abandonar el sistema y utiliza la clave pública correspondiente para que otras partes puedan verificar operaciones criptográficas asociadas. Un certificado digital, normalmente en formato X.509, vincula esa clave pública con una identidad o dominio. Una autoridad certificadora comprueba dicha vinculación y firma el certificado con su propia clave privada; el cliente puede verificar la firma mediante la clave pública de la autoridad, directamente o a través de una cadena de confianza.
 \\
 \\
-En la práctica, este mecanismo es uno de los pilares de protocolos como TLS, utilizados para proteger las comunicaciones mediante HTTPS. Cuando un usuario accede a una página web segura, el servidor presenta su certificado y, con él, la clave pública asociada. De este modo, los certificados digitales no solo hacen posible la autenticación de servidores, sino que también exponen públicamente una gran cantidad de claves que pueden ser analizadas con fines de auditoría criptográfica.
+En la práctica, este mecanismo es uno de los pilares de TLS, el protocolo utilizado para proteger HTTPS. Como resume la Figura~\ref{fig:conexion_tls}, el cliente inicia la negociación, el servidor presenta su certificado y demuestra que posee la clave privada asociada, y ambas partes establecen claves de sesión para proteger el tráfico posterior \citep{rfc8446}. La clave privada del servidor no se transmite; lo que se publica mediante el certificado es su clave pública. Los certificados digitales hacen así posible la autenticación del servidor y, al mismo tiempo, exponen claves públicas que pueden analizarse con fines de auditoría criptográfica.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.45cm,
+        processbox/.style={draw, rounded corners=2pt, text width=8.2cm,
+            minimum height=0.8cm, align=center, fill=gray!7},
+        validation/.style={processbox, fill=blue!7},
+        trust/.style={draw, rounded corners=2pt, text width=3.7cm,
+            minimum height=1.05cm, align=center, fill=blue!7,
+            font=\footnotesize},
+        result/.style={processbox, fill=blue!15, draw=blue!60!black,
+            text=blue!60!black, very thick},
+        arrow/.style={-{Latex[length=2.5mm]}, thick}
+    ]
+        \node[processbox] (request)
+            {\textbf{1. Solicitud de conexión HTTPS}};
+        \node[processbox, below=of request] (certificate)
+            {\textbf{2. Presentación del certificado X.509}\\
+            El servidor acredita la posesión de la clave privada};
+        \node[validation, below=of certificate] (verify)
+            {\textbf{3. Validación del certificado}\\
+            por el navegador:
+            identidad, periodo de validez, cadena de confianza y firma};
+        \node[processbox, below=of verify] (keys)
+            {\textbf{4. Derivación de las claves de sesión}};
+        \node[result, below=of keys] (channel)
+            {\textbf{Conexión HTTPS autenticada y cifrada}};
+
+        \node[trust, left=1.0cm of verify] (trust)
+            {\textbf{Almacén de confianza}\\
+            Claves públicas de autoridades certificadoras};
+
+        \draw[arrow] (request) -- (certificate);
+        \draw[arrow] (certificate) -- (verify);
+        \draw[arrow] (verify) -- (keys);
+        \draw[arrow] (keys) -- (channel);
+        \draw[arrow] (trust) -- (verify);
+    \end{tikzpicture}
+    \caption{Esquema simplificado del establecimiento de una conexión TLS. Elaboración propia a partir de RFC 8446 \citep{rfc8446}.}
+    \label{fig:conexion_tls}
+\end{figure}
+En este contexto surge \textit{Certificate Transparency}, un marco diseñado para aportar mayor transparencia al ecosistema de certificación web. Su idea principal es que los certificados emitidos por las autoridades certificadoras queden registrados en logs públicos, verificables y de solo anexado, de manera que su emisión pueda ser observada y supervisada por terceros \citep{rfc9162}. Esto dificulta que una autoridad certificadora emita certificados incorrectos o fraudulentos sin que nadie pueda detectarlo.
 \\
 \\
-En este contexto surge \textit{Certificate Transparency}, un marco diseñado para aportar mayor transparencia al ecosistema de certificación web. Su idea principal es que los certificados emitidos por las autoridades certificadoras queden registrados en logs públicos y verificables, de manera que su emisión pueda ser observada y supervisada por terceros. Esto dificulta que una autoridad certificadora emita certificados incorrectos o fraudulentos sin que nadie pueda detectarlo.
+La relación con este TFM es directa: cada certificado registrado contiene una clave pública y, cuando esta es RSA, contiene el módulo \(N\) que necesita el algoritmo \textit{batch GCD}. Los \textit{CT logs} convierten por tanto una infraestructura creada para vigilar la emisión de certificados en una fuente reproducible de módulos RSA reales. El flujo del proyecto extrae esos módulos, los normaliza y busca factores primos compartidos entre ellos. Sin \textit{Certificate Transparency}, reunir una colección comparable exigiría escanear servicios de Internet y produciría un conjunto menos estable y más difícil de reproducir.
 \\
 \\
-Desde el punto de vista de nuestro trabajo, la importancia de \textit{Certificate Transparency} está en que estos logs contienen enormes volúmenes de certificados reales emitidos en Internet. Como los certificados incluyen las claves públicas de los servidores, los \textit{CT logs} se convierten en una base de datos muy valiosa para estudiar cómo se está desplegando realmente la criptografía en la Web y para realizar auditorías a gran escala sobre claves públicas RSA.
-\\
-\\
-La tesis \textit{Finding shared RSA factors in the Certificate Transparency logs} demostró precisamente el interés de este enfoque \cite{vage2022finding}. En ese trabajo se recopilaron más de 159 millones de claves RSA distintas de 2048 bits extraídas de \textit{CT logs}, lo que permitió detectar casos reales de factores compartidos y mostró que este tipo de análisis es viable sobre conjuntos masivos de certificados \cite{vage2022finding}. Al mismo tiempo, la propia tesis dejaba claro que todavía quedaba margen para ampliar este tipo de estudios sobre volúmenes aún mayores de datos.
+Un trabajo anterior demostró el interés de este enfoque al recopilar más de 159 millones de claves RSA distintas de 2048 bits extraídas de \textit{CT logs}. El análisis permitió detectar casos reales de factores compartidos y mostró que este tipo de auditoría es viable sobre conjuntos masivos de certificados, aunque todavía quedaba margen para estudiar volúmenes mayores \citep{vage2022finding}.
 \\
 \\
 Esto conecta de forma directa con la línea de trabajo seguida en este TFM. Gracias a los \textit{CT logs} es posible pasar de un análisis puramente teórico sobre debilidades de RSA a una auditoría empírica sobre claves públicas realmente desplegadas en Internet. Como veremos en el capítulo siguiente, esta posibilidad ha dado lugar a trabajos previos muy relevantes y justifica la necesidad de seguir buscando métodos más eficientes para detectar factores compartidos a gran escala.

@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
     std::cout << "[Fase 1] Arbol de productos + GCD en linea\n"
               << "  Niveles construidos  : " << tree_levels << "\n"
               << "  GCDs no triviales    : " << collected_gcds.size() << "\n"
-              << "  CPU Time             : " << std::fixed << std::setprecision(2)
+              << "  Tiempo transcurrido  : " << std::fixed << std::setprecision(2)
               << std::chrono::duration<double, std::milli>(t1_end - t1_start).count()
               << " ms\n\n";
 
@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
     std::cout << "[Fase 2] Agregacion en variable B\n"
               << "  B bit-length         : "
               << mpz_sizeinbase(B.get_mpz_t(), 2) << " bits\n"
-              << "  CPU Time             : " << std::fixed << std::setprecision(2)
+              << "  Tiempo transcurrido  : " << std::fixed << std::setprecision(2)
               << std::chrono::duration<double, std::milli>(t2_end - t2_start).count()
               << " ms\n\n";
 
@@ -260,7 +260,7 @@ int main(int argc, char* argv[])
 
     std::cout << "\n[Fase 3] Enumeracion final\n"
               << "  Claves vulnerables   : " << found << "\n"
-              << "  CPU Time             : " << std::fixed << std::setprecision(2)
+              << "  Tiempo transcurrido  : " << std::fixed << std::setprecision(2)
               << std::chrono::duration<double, std::milli>(t3_end - t3_start).count()
               << " ms\n\n";
 

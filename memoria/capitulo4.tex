@@ -3,7 +3,7 @@
 Una vez revisados los antecedentes principales del problema y situado este TFM dentro de la literatura previa, en este capítulo pasamos a describir la metodología seguida en nuestro trabajo.
 \\
 \\
-Como se ha visto en el capítulo anterior, partimos de una línea de investigación ya existente centrada en la detección de factores compartidos en claves RSA públicas obtenidas a partir de \textit{Certificate Transparency logs}. En particular, tomamos como referencia el planteamiento experimental de la tesis de Våge, pero sustituimos el enfoque clásico basado en \textit{product tree} y \textit{remainder tree} por la propuesta más reciente de Pelofske, el algoritmo \textit{Binary Tree Batch GCD} \cite{vage2022finding,pelofske2024efficient}.
+Como se ha visto en el capítulo anterior, partimos de una línea de investigación ya existente centrada en la detección de factores compartidos en claves RSA públicas obtenidas a partir de \textit{Certificate Transparency logs}. En particular, tomamos como referencia un planteamiento experimental previo, pero sustituimos el enfoque clásico basado en \textit{product tree} y \textit{remainder tree} por el algoritmo más reciente \textit{Binary Tree Batch GCD} \citep{vage2022finding,pelofske2024efficient}.
 \\
 \\
 Nuestro objetivo es estudiar si esta alternativa resulta adecuada para el problema que nos ocupa y si puede constituir una mejora práctica frente al método tradicional. Para ello, no nos limitamos a revisar el algoritmo desde un punto de vista teórico, sino que lo implementamos y lo aplicamos en dos contextos distintos: primero sobre datos sintéticos generados de forma controlada y, después, sobre datos reales obtenidos a partir de \textit{CT logs}.
@@ -25,22 +25,87 @@ Si el conjunto contiene \(M\) módulos RSA, una estrategia de fuerza bruta exigi
 \frac{M(M-1)}{2}
 \]
 
-comparaciones distintas, ya que habría que estudiar todos los pares posibles. Aunque cada cálculo individual de \textit{gcd} sea barato, el número total de operaciones crece de forma cuadrática con el tamaño del conjunto, lo que convierte este enfoque en una opción poco realista cuando trabajamos con miles, millones o incluso cientos de millones de claves. El artículo de Pelofske insiste precisamente en esta idea al presentar el problema como un ataque \textit{all-to-all GCD} \cite{pelofske2024efficient}.
+comparaciones distintas, ya que habría que estudiar todos los pares posibles. Aunque cada cálculo individual de \textit{gcd} sea barato, el número total de operaciones crece de forma cuadrática con el tamaño del conjunto, lo que convierte este enfoque en una opción poco realista cuando trabajamos con miles, millones o incluso cientos de millones de claves. El artículo de Pelofske insiste precisamente en esta idea al presentar el problema como un ataque \textit{all-to-all GCD} \citep{pelofske2024efficient}.
 \\
 \\
-A partir de esta limitación surge la necesidad de diseñar métodos que permitan detectar factores compartidos sin tener que comparar cada módulo con todos los demás de forma aislada. Esa es la idea que da lugar a los algoritmos \textit{batch GCD}. En términos generales, estos métodos no cambian el objetivo final del ataque, que sigue siendo identificar divisores comunes no triviales dentro de un conjunto de módulos RSA, pero sí modifican la forma de organizar el cálculo para aprovechar la estructura global del conjunto y reducir de manera importante el coste práctico \cite{pelofske2024efficient,vage2022finding}.
+A partir de esta limitación surge la necesidad de diseñar métodos que permitan detectar factores compartidos sin tener que comparar cada módulo con todos los demás de forma aislada. Esa es la idea que da lugar a los algoritmos \textit{batch GCD}. En términos generales, estos métodos no cambian el objetivo final del ataque, que sigue siendo identificar divisores comunes no triviales dentro de un conjunto de módulos RSA, pero sí modifican la forma de organizar el cálculo para aprovechar la estructura global del conjunto y reducir de manera importante el coste práctico \citep{pelofske2024efficient,vage2022finding}.
 \\
 \\
-Dentro de esta familia de enfoques, el método clásico descrito en la tesis de Våge parte de la construcción de un \textit{product tree} y un \textit{remainder tree}. La idea básica es agrupar los módulos del conjunto de manera jerárquica, multiplicándolos para formar productos intermedios cada vez mayores. Después, mediante el árbol de residuos, se comprueba en las hojas si un determinado módulo comparte algún factor con el producto del resto. De esta forma, el análisis deja de estar planteado como una colección de comparaciones independientes y pasa a organizarse alrededor de operaciones sobre árboles, lo que permite escalar mucho mejor que la enumeración exhaustiva de todos los pares \cite{vage2022finding,pelofske2024efficient}.
+Dentro de esta familia de enfoques, el método clásico descrito en la tesis de Våge parte de la construcción de un \textit{product tree} y un \textit{remainder tree}. La idea básica es agrupar los módulos del conjunto de manera jerárquica, multiplicándolos para formar productos intermedios cada vez mayores. Después, mediante el árbol de residuos, se comprueba en las hojas si un determinado módulo comparte algún factor con el producto del resto. De esta forma, el análisis deja de estar planteado como una colección de comparaciones independientes y pasa a organizarse alrededor de operaciones sobre árboles, lo que permite escalar mucho mejor que la enumeración exhaustiva de todos los pares \citep{vage2022finding,pelofske2024efficient}.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{0.78\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=0.9cm and 0.9cm,
+        product/.style={rectangle, draw=blue!55!black, fill=blue!8,
+            thick, minimum width=2.1cm, minimum height=0.8cm,
+            align=center},
+        remainder/.style={rectangle, draw=red!65!black, fill=red!8,
+            thick, minimum width=2.7cm, minimum height=0.8cm,
+            align=center},
+        result/.style={rectangle, draw=green!45!black, fill=green!8,
+            thick, minimum width=2.35cm, minimum height=0.8cm,
+            align=center},
+        flow/.style={-{Latex[length=2.2mm]}, thick}
+    ]
+        \node[product] (n1) {\(N_1\)};
+        \node[product, right=of n1] (n2) {\(N_2\)};
+        \node[product, right=of n2] (n3) {\(N_3\)};
+        \node[product, right=of n3] (n4) {\(N_4\)};
+
+        \node[product, below=of $(n1)!0.5!(n2)$] (p12) {\(P_{12}=N_1N_2\)};
+        \node[product, below=of $(n3)!0.5!(n4)$] (p34) {\(P_{34}=N_3N_4\)};
+        \node[product, below=of $(p12)!0.5!(p34)$] (p) {\(P=P_{12}P_{34}\)};
+
+        \node[remainder, below left=1.0cm and 0.25cm of p]
+            (r12) {\(R_{12}=P\bmod P_{12}^{\,2}\)};
+        \node[remainder, below right=1.0cm and 0.25cm of p]
+            (r34) {\(R_{34}=P\bmod P_{34}^{\,2}\)};
+        \node[result, below=of r12] (g12)
+            {\(\gcd\!\left(N_1,R_1/N_1\right)\)};
+        \node[result, below=of r34] (g34)
+            {\(\gcd\!\left(N_3,R_3/N_3\right)\)};
+
+        \draw[flow] (n1) -- (p12);
+        \draw[flow] (n2) -- (p12);
+        \draw[flow] (n3) -- (p34);
+        \draw[flow] (n4) -- (p34);
+        \draw[flow] (p12) -- (p);
+        \draw[flow] (p34) -- (p);
+        \draw[flow] (p) -- (r12);
+        \draw[flow] (p) -- (r34);
+        \draw[flow] (r12) -- node[right, font=\small]
+            {\(R_1=R_{12}\bmod N_1^2\)} (g12);
+        \draw[flow] (r34) -- node[right, font=\small]
+            {\(R_3=R_{34}\bmod N_3^2\)} (g34);
+
+        \node[font=\small\bfseries, text=blue!55!black,
+            left=0.55cm of p12] {Árbol de productos};
+        \node[font=\small\bfseries, text=red!65!black,
+            left=0.55cm of r12] {Árbol de residuos};
+    \end{tikzpicture}%
+    }
+    \caption{Esquema simplificado del método clásico basado en un árbol de
+    productos y un árbol de residuos. Solo se muestran dos de las cuatro
+    comprobaciones finales para mantener legible la figura.}
+    \label{fig:batch_gcd_clasico}
+\end{figure}
+
+La Figura~\ref{fig:batch_gcd_clasico} resume el recorrido del método clásico.
+Los módulos se combinan primero hasta obtener el producto global \(P\). A
+continuación, los residuos se propagan en sentido descendente y permiten
+calcular para cada hoja el máximo común divisor con el producto de los demás
+módulos, sin enumerar explícitamente todos los pares.
 \\
 \\
-La tesis explica además que, para trabajar con colecciones muy grandes de claves, este planteamiento puede extenderse al denominado \textit{batch GCD algorithm}. En este caso, el conjunto completo de claves se divide en varios lotes o \textit{batches}, y sobre cada uno de ellos se construyen sus correspondientes árboles de productos y residuos. Este paso permite controlar mejor el tamaño de los enteros en la parte alta de los árboles y, por tanto, reducir el cuello de botella asociado al manejo de productos gigantescos. Sin embargo, esta división introduce también una consecuencia importante: para detectar factores compartidos entre módulos pertenecientes a lotes distintos, cada producto grande de un lote debe comprobarse frente a los árboles de residuos de los demás, de modo que el algoritmo debe repetirse múltiples veces entre lotes \cite{vage2022finding}.
+La tesis explica además que, para trabajar con colecciones muy grandes de claves, este planteamiento puede extenderse al denominado \textit{batch GCD algorithm}. En este caso, el conjunto completo de claves se divide en varios lotes o \textit{batches}, y sobre cada uno de ellos se construyen sus correspondientes árboles de productos y residuos. Este paso permite controlar mejor el tamaño de los enteros en la parte alta de los árboles y, por tanto, reducir el cuello de botella asociado al manejo de productos gigantescos. Sin embargo, esta división introduce también una consecuencia importante: para detectar factores compartidos entre módulos pertenecientes a lotes distintos, cada producto grande de un lote debe comprobarse frente a los árboles de residuos de los demás, de modo que el algoritmo debe repetirse múltiples veces entre lotes \citep{vage2022finding}.
 \\
 \\
 Por tanto, desde un punto de vista metodológico, el fundamento del \textit{batch GCD} puede resumirse en la siguiente idea: en lugar de preguntar por separado si cada par de módulos comparte un factor, se reorganiza el problema para explotar productos agregados que contienen información sobre muchos módulos a la vez. Esto permite detectar divisores comunes sin recorrer explícitamente todas las comparaciones posibles. En otras palabras, el \textit{batch GCD} no elimina la lógica del ataque por máximo común divisor, pero sí sustituye una búsqueda par a par por una estrategia global mucho más escalable.
 \\
 \\
-Esta perspectiva también aparece de forma clara en el artículo de Pelofske. Allí se explica que el objetivo de fondo consiste en cubrir, de manera eficiente, el equivalente a todas las comparaciones necesarias en un problema \textit{all-to-all GCD}. Según el artículo, una propiedad importante del máximo común divisor es que, si dividimos el conjunto de enteros en dos mitades y calculamos el \textit{gcd} entre los productos de ambas, obtenemos de una sola vez información sobre muchos divisores comunes que aparecerían en comparaciones individuales. Aunque una sola partición no cubre todas las combinaciones posibles, la idea puede aplicarse de forma recursiva mediante una estructura arbórea, lo que permite recuperar la información necesaria sobre todos los factores compartidos presentes en el conjunto \cite{pelofske2024efficient}.
+Esta perspectiva también aparece de forma clara en el artículo de Pelofske. Allí se explica que el objetivo de fondo consiste en cubrir, de manera eficiente, el equivalente a todas las comparaciones necesarias en un problema \textit{all-to-all GCD}. Según el artículo, una propiedad importante del máximo común divisor es que, si dividimos el conjunto de enteros en dos mitades y calculamos el \textit{gcd} entre los productos de ambas, obtenemos de una sola vez información sobre muchos divisores comunes que aparecerían en comparaciones individuales. Aunque una sola partición no cubre todas las combinaciones posibles, la idea puede aplicarse de forma recursiva mediante una estructura arbórea, lo que permite recuperar la información necesaria sobre todos los factores compartidos presentes en el conjunto \citep{pelofske2024efficient}.
 \\
 \\
 Visto así, el \textit{batch GCD} no debe entenderse únicamente como una optimización práctica, sino como el núcleo algorítmico que hace viable este tipo de auditorías criptográficas a gran escala. Sin una reorganización de este tipo, analizar colecciones masivas de claves RSA reales, como las procedentes de \textit{Certificate Transparency logs}, sería computacionalmente muy costoso. Por ello, tanto el enfoque clásico basado en \textit{product tree} y \textit{remainder tree} como la propuesta más reciente de Pelofske pueden interpretarse como distintas formas de materializar una misma idea general: transformar un ataque basado en comparaciones par a par en un procedimiento global y escalable.
@@ -53,7 +118,7 @@ Una vez establecido este fundamento general, en el siguiente apartado describire
 Una vez introducido el fundamento general de los métodos \textit{batch GCD}, en este apartado describiremos con más detalle el algoritmo \textit{Binary Tree Batch GCD}, que constituye el núcleo metodológico de nuestro trabajo. Aquí nos centraremos en su funcionamiento y en la lógica que seguiremos posteriormente en nuestra implementación.
 \\
 \\
-El artículo de Pelofske define el algoritmo en tres pasos principales \cite{pelofske2024efficient}. En primer lugar, se construye un árbol binario de productos a partir del conjunto de módulos RSA de entrada. En segundo lugar, se toma el producto de todos los valores de \textit{gcd} obtenidos durante la construcción del árbol y se agrupan en un único entero, que el artículo denota por \(B\). En tercer lugar, se enumera el conjunto original de módulos y se calcula el \textit{gcd} entre cada uno de ellos y \(B\), de modo que los resultados no triviales permiten recuperar los factores compartidos \cite{pelofske2024efficient}.
+El artículo de Pelofske define el algoritmo en tres pasos principales \citep{pelofske2024efficient}. En primer lugar, se construye un árbol binario de productos a partir del conjunto de módulos RSA de entrada. En segundo lugar, se toma el producto de todos los valores de \textit{gcd} obtenidos durante la construcción del árbol y se agrupan en un único entero, que el artículo denota por \(B\). En tercer lugar, se enumera el conjunto original de módulos y se calcula el \textit{gcd} entre cada uno de ellos y \(B\), de modo que los resultados no triviales permiten recuperar los factores compartidos \citep{pelofske2024efficient}.
 \\
 \\
 Si denotamos por
@@ -62,7 +127,7 @@ Si denotamos por
 N = \{N_1, N_2, \dots, N_M\}
 \]
 
-el conjunto de módulos RSA que queremos analizar, la idea básica del algoritmo consiste en no comparar cada par de módulos de manera aislada, sino organizar el cálculo de forma jerárquica. Para ello, en el nivel más bajo del árbol se agrupan los módulos por parejas. Para cada pareja se realizan dos operaciones: por un lado, se calcula su máximo común divisor y, por otro, se calcula su producto. Los productos obtenidos pasan al siguiente nivel del árbol, mientras que los \textit{gcd} calculados se conservan como parte de la información que luego se agregará en \(B\) \cite{pelofske2024efficient}.
+el conjunto de módulos RSA que queremos analizar, la idea básica del algoritmo consiste en no comparar cada par de módulos de manera aislada, sino organizar el cálculo de forma jerárquica. Para ello, en el nivel más bajo del árbol se agrupan los módulos por parejas. Para cada pareja se realizan dos operaciones: por un lado, se calcula su máximo común divisor y, por otro, se calcula su producto. Los productos obtenidos pasan al siguiente nivel del árbol, mientras que los \textit{gcd} calculados se conservan como parte de la información que luego se agregará en \(B\) \citep{pelofske2024efficient}.
 \\
 \\
 En los niveles superiores se repite la misma idea, pero ya no con módulos individuales, sino con los productos generados en el nivel anterior. Si en un cierto nivel tenemos dos nodos con valores \(A\) y \(C\), se calcula
@@ -77,19 +142,81 @@ y, salvo en la raíz, también se calcula el producto
 A \cdot C
 \]
 
-para construir el nodo padre. Este procedimiento se aplica de forma recursiva hasta alcanzar la parte superior del árbol \cite{pelofske2024efficient}.
+para construir el nodo padre. Este procedimiento se aplica de forma recursiva hasta alcanzar la parte superior del árbol \citep{pelofske2024efficient}.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{0.94\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1.15cm and 0.8cm,
+        modulus/.style={circle, draw=black, thick, minimum size=1.25cm},
+        product/.style={circle, draw=black, thick, minimum size=1.55cm,
+            align=center},
+        group/.style={ellipse, draw=gray!70, dashed, inner xsep=0.15cm,
+            inner ysep=0.18cm},
+        gcdline/.style={blue!70!black, very thick},
+        productline/.style={red!70!black, thick,
+            -{Latex[length=2.2mm]}}
+    ]
+        \node[modulus] (n1) {\(N_1\)};
+        \node[modulus, right=2.4cm of n1] (n2) {\(N_2\)};
+        \node[modulus, right=3.0cm of n2] (n3) {\(N_3\)};
+        \node[modulus, right=2.4cm of n3] (n4) {\(N_4\)};
+
+        \node[product, below=1.8cm of $(n1)!0.5!(n2)$]
+            (p12) {\(N_1N_2\)};
+        \node[product, below=1.8cm of $(n3)!0.5!(n4)$]
+            (p34) {\(N_3N_4\)};
+        \node[product, below=1.8cm of $(p12)!0.5!(p34)$]
+            (p) {\(N_1N_2\)\\\(N_3N_4\)};
+
+        \draw[gcdline] (n1) -- node[above=2pt, font=\scriptsize,
+            fill=white, inner sep=1pt]
+            {\(g_1=\gcd(N_1,N_2)\)} (n2);
+        \draw[gcdline] (n3) -- node[above=2pt, font=\scriptsize,
+            fill=white, inner sep=1pt]
+            {\(g_2=\gcd(N_3,N_4)\)} (n4);
+        \draw[gcdline] (p12) -- node[above=2pt, font=\scriptsize,
+            fill=white, inner sep=1pt]
+            {\(g_3=\gcd(N_1N_2,N_3N_4)\)} (p34);
+
+        \draw[productline] (n1) -- (p12);
+        \draw[productline] (n2) -- (p12);
+        \draw[productline] (n3) -- (p34);
+        \draw[productline] (n4) -- (p34);
+        \draw[productline] (p12) -- (p);
+        \draw[productline] (p34) -- (p);
+
+        \node[group, fit=(n1)(n2)] {};
+        \node[group, fit=(n3)(n4)] {};
+        \node[group, fit=(p12)(p34)] {};
+        \node[below=0.25cm of p, font=\small\bfseries, text=blue!55!black]
+            {\(B=g_1g_2g_3\)};
+    \end{tikzpicture}%
+    }
+    \caption{Construcción del árbol en \textit{Binary Tree Batch GCD}. En cada
+    agrupación se calcula el producto que asciende al siguiente nivel y el GCD
+    entre las dos ramas, cuyos valores no triviales se agregan en \(B\).}
+    \label{fig:binary_tree_batch_gcd}
+\end{figure}
+
+La Figura~\ref{fig:binary_tree_batch_gcd} muestra el caso simplificado de cuatro
+módulos empleado también en el póster. Las líneas rojas representan la
+construcción de los productos y las líneas azules los cálculos de GCD entre
+ramas hermanas. A diferencia del método clásico, el recorrido termina al
+alcanzar la raíz y no necesita construir después un árbol de residuos.
 \\
 \\
-La intuición detrás de este diseño es importante. Tal y como explica Pelofske, si dividimos el conjunto de enteros en dos mitades y calculamos el \textit{gcd} entre el producto de una mitad y el producto de la otra, obtenemos de una sola vez información equivalente a un gran número de comparaciones individuales entre elementos de ambas mitades \cite{pelofske2024efficient}. Una sola partición no cubre todas las combinaciones posibles, pero al aplicar esta idea recursivamente sobre un árbol binario sí se consigue cubrir, en conjunto, toda la información necesaria para un problema \textit{all-to-all GCD}.
+La intuición detrás de este diseño es importante. Tal y como explica Pelofske, si dividimos el conjunto de enteros en dos mitades y calculamos el \textit{gcd} entre el producto de una mitad y el producto de la otra, obtenemos de una sola vez información equivalente a un gran número de comparaciones individuales entre elementos de ambas mitades \citep{pelofske2024efficient}. Una sola partición no cubre todas las combinaciones posibles, pero al aplicar esta idea recursivamente sobre un árbol binario sí se consigue cubrir, en conjunto, toda la información necesaria para un problema \textit{all-to-all GCD}.
 \\
 \\
-Una vez construido el árbol, el algoritmo dispone de todos los valores de \textit{gcd} generados en sus nodos internos. Si el árbol tiene \(M\) hojas, el número de nodos internos es \(M-1\), y por tanto se obtiene exactamente ese número de resultados intermedios de \textit{gcd} \cite{pelofske2024efficient}. El siguiente paso consiste en tomar todos esos resultados y multiplicarlos entre sí para formar un único entero, que denotaremos por \(B\). Formalmente, si llamamos \(g_1, g_2, \dots, g_{M-1}\) a los valores de \textit{gcd} obtenidos durante la construcción del árbol, entonces se define
+Una vez construido el árbol, el algoritmo dispone de todos los valores de \textit{gcd} generados en sus nodos internos. Si el árbol tiene \(M\) hojas, el número de nodos internos es \(M-1\), y por tanto se obtiene exactamente ese número de resultados intermedios de \textit{gcd} \citep{pelofske2024efficient}. El siguiente paso consiste en tomar todos esos resultados y multiplicarlos entre sí para formar un único entero, que denotaremos por \(B\). Formalmente, si llamamos \(g_1, g_2, \dots, g_{M-1}\) a los valores de \textit{gcd} obtenidos durante la construcción del árbol, entonces se define
 
 \[
 B = \prod_{j=1}^{M-1} g_j
 \]
 
-Si \(B = 1\), entonces no se ha encontrado ningún divisor común no trivial en el conjunto de módulos analizado. En cambio, si \(B > 1\), ese entero contiene la información agregada sobre los factores compartidos presentes en el conjunto \cite{pelofske2024efficient}.
+Si \(B = 1\), entonces no se ha encontrado ningún divisor común no trivial en el conjunto de módulos analizado. En cambio, si \(B > 1\), ese entero contiene la información agregada sobre los factores compartidos presentes en el conjunto \citep{pelofske2024efficient}.
 \\
 \\
 El tercer y último paso consiste en recorrer de nuevo el conjunto original de módulos y calcular, para cada \(N_i\), el valor
@@ -98,7 +225,7 @@ El tercer y último paso consiste en recorrer de nuevo el conjunto original de m
 \gcd(N_i, B)
 \]
 
-Cualquier resultado no trivial obtenido en esta enumeración indica que el módulo \(N_i\) comparte algún factor con otro módulo del conjunto. De este modo, el algoritmo transforma toda la información agregada en \(B\) en factores concretos asociados a módulos individuales \cite{pelofske2024efficient}.
+Cualquier resultado no trivial obtenido en esta enumeración indica que el módulo \(N_i\) comparte algún factor con otro módulo del conjunto. De este modo, el algoritmo transforma toda la información agregada en \(B\) en factores concretos asociados a módulos individuales \citep{pelofske2024efficient}.
 \\
 \\
 Según el artículo, el número exacto de operaciones de \textit{gcd} realizadas por este procedimiento es \(M-1\) durante la construcción del árbol, más \(M\) en la fase final de enumeración, es decir, un total de
@@ -107,20 +234,20 @@ Según el artículo, el número exacto de operaciones de \textit{gcd} realizadas
 2M - 1
 \]
 
-operaciones de \textit{gcd} \cite{pelofske2024efficient}. Esto contrasta fuertemente con el número cuadrático de comparaciones que exigiría una estrategia ingenua basada en revisar todos los pares posibles.
+operaciones de \textit{gcd} \citep{pelofske2024efficient}. Esto contrasta fuertemente con el número cuadrático de comparaciones que exigiría una estrategia ingenua basada en revisar todos los pares posibles.
 \\
 \\
-Una ventaja importante de este enfoque es que no necesita construir explícitamente un \textit{remainder tree}, como ocurre en el método clásico. En su lugar, la información relevante se va acumulando a través de los \textit{gcd} calculados en los nodos del árbol y del producto agregado \(B\). Según Pelofske, esta es precisamente la característica que permite reducir parte del coste práctico respecto al enfoque tradicional, manteniendo al mismo tiempo una complejidad asintótica del mismo orden, dominada por la construcción del árbol de productos \cite{pelofske2024efficient}.
+Una ventaja importante de este enfoque es que no necesita construir explícitamente un \textit{remainder tree}, como ocurre en el método clásico. En su lugar, la información relevante se va acumulando a través de los \textit{gcd} calculados en los nodos del árbol y del producto agregado \(B\). Según Pelofske, esta es precisamente la característica que permite reducir parte del coste práctico respecto al enfoque tradicional, manteniendo al mismo tiempo una complejidad asintótica del mismo orden, dominada por la construcción del árbol de productos \citep{pelofske2024efficient}.
 \\
 \\
-No obstante, el propio artículo también señala una limitación importante. El comportamiento práctico del algoritmo depende de cuántos factores compartidos existan realmente en el conjunto y de cómo estén distribuidos \cite{pelofske2024efficient}. En particular, pueden aparecer casos más costosos cuando un mismo módulo contiene varios factores que también aparecen en otras claves del conjunto. Aunque este tipo de situaciones no invalida el algoritmo, sí conviene tenerlo en cuenta desde el punto de vista de la implementación.
+No obstante, el propio artículo también señala una limitación importante. El comportamiento práctico del algoritmo depende de cuántos factores compartidos existan realmente en el conjunto y de cómo estén distribuidos \citep{pelofske2024efficient}. En particular, pueden aparecer casos más costosos cuando un mismo módulo contiene varios factores que también aparecen en otras claves del conjunto. Aunque este tipo de situaciones no invalida el algoritmo, sí conviene tenerlo en cuenta desde el punto de vista de la implementación.
 \\
 \\
 Desde una perspectiva metodológica, el interés del \textit{Binary Tree Batch GCD} en nuestro trabajo radica en que organiza el problema de forma especialmente adecuada para su implementación eficiente. La estructura binaria facilita la separación del proceso en fases bien definidas: construcción del árbol, acumulación de divisores comunes y enumeración final sobre el conjunto original. Esta organización resulta útil tanto para gestionar la memoria como para plantear posibles estrategias de paralelización, aspectos que serán importantes en la implementación desarrollada en este TFM.
 
 \section{Implementación desarrollada}
 
-La implementación principal utilizada en este trabajo se ha desarrollado en C++17 empleando la biblioteca GMP para la aritmética multiprecisión. La elección de C++ responde a la necesidad de trabajar con enteros muy grandes de manera eficiente y de disponer de un mayor control sobre el uso de memoria y el rendimiento general de la ejecución. El código está preparado para aprovechar OpenMP cuando el entorno lo permite, especialmente en la fase de enumeración final, aunque conserva la posibilidad de ejecutarse de forma secuencial si el sistema no dispone de esta dependencia.
+La implementación principal utilizada en este trabajo se ha desarrollado en C++17 empleando la biblioteca GMP para la aritmética multiprecisión \citep{gmp2023manual}. La elección de C++ responde a la necesidad de trabajar con enteros muy grandes de manera eficiente y de disponer de un mayor control sobre el uso de memoria y el rendimiento general de la ejecución. El código está preparado para aprovechar OpenMP \citep{openmp2021specification} cuando el entorno lo permite, especialmente en la fase de enumeración final, aunque conserva la posibilidad de ejecutarse de forma secuencial si el sistema no dispone de esta dependencia.
 \\
 \\
 Siguiendo la lógica del algoritmo descrito en el apartado anterior, la implementación se ha organizado en tres fases claramente diferenciadas. La primera corresponde a la construcción del árbol binario de productos con cálculo de \textit{gcd} en línea. En esta etapa, los módulos RSA se agrupan por parejas y, en cada nodo, se calcula tanto el producto que se propagará al nivel superior como el \textit{gcd} entre ambos hijos. Los valores de \textit{gcd} no triviales se almacenan para ser utilizados posteriormente en la fase de agregación.
@@ -135,19 +262,58 @@ La segunda fase consiste en la agregación de todos los divisores comunes no tri
 La tercera fase corresponde a la enumeración final sobre el conjunto original de módulos. Para cada \(N_i\), se calcula \(\gcd(N_i,B)\) y se comprueba si el resultado es no trivial. Esta fase es especialmente adecuada para una posible paralelización, ya que cada comprobación puede realizarse de forma independiente sobre módulos distintos. Por esta razón, la implementación incluye soporte opcional para OpenMP, aunque el diseño del algoritmo no depende de dicha paralelización.
 \\
 \\
+La Figura~\ref{fig:modulos_implementacion} resume los módulos funcionales de la implementación y el recorrido de los datos. La separación entre preparación, núcleo algorítmico y resultados permite utilizar la misma implementación tanto con conjuntos sintéticos como con módulos extraídos de certificados reales.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        block/.style={draw, rounded corners, minimum width=3.2cm, minimum height=1.0cm, align=center},
+        flow/.style={-{Latex[length=2.5mm]}, thick},
+        node distance=1.1cm and 1.35cm,
+        font=\small
+    ]
+        \node[block] (fuentes) {Fuentes de entrada\\sintéticas o CT};
+        \node[block, right=of fuentes] (prep) {Extracción, validación\\y deduplicación};
+        \node[block, right=of prep] (lector) {Lectura de módulos\\hexadecimales};
+        \node[block, below=of lector] (arbol) {Árbol binario de\\productos y GCD};
+        \node[block, left=of arbol] (agregacion) {Agregación de factores\\en \(B\)};
+        \node[block, left=of agregacion] (enumeracion) {Enumeración final\\\(\gcd(N_i,B)\)};
+        \node[block, below=of agregacion] (salida) {Factores encontrados,\\tiempos y memoria};
+        \draw[flow] (fuentes) -- (prep);
+        \draw[flow] (prep) -- (lector);
+        \draw[flow] (lector) -- (arbol);
+        \draw[flow] (arbol) -- (agregacion);
+        \draw[flow] (agregacion) -- (enumeracion);
+        \draw[flow] (enumeracion) |- (salida);
+        \draw[flow] (agregacion) -- (salida);
+    \end{tikzpicture}
+    \caption{Módulos funcionales y flujo de datos de la implementación desarrollada.}
+    \label{fig:modulos_implementacion}
+\end{figure}
+
 Para la comparación experimental se utilizaron también las implementaciones Python originales del repositorio de Pelofske. No obstante, dicho repositorio no pudo ejecutarse directamente sin pequeñas adaptaciones de compatibilidad. En particular, fue necesario restaurar el alias \texttt{np.product}, eliminado en NumPy 2.0, y resolver las rutas relativas utilizadas por la función de generación de claves débiles. Estas adaptaciones se implementaron mediante \textit{wrappers} externos que importan el código original sin modificar su lógica algorítmica.
 \\
 \\
 Los datos sintéticos se generaron siguiendo la función \texttt{generate\_weak\_keys} del repositorio original. Para cada configuración se creó un archivo de módulos RSA en formato hexadecimal, uno por línea. Ese mismo archivo se utilizó como entrada para los tres algoritmos comparados: el \textit{Remainder Tree Batch GCD} en Python, el \textit{Binary Tree Batch GCD} en Python y nuestra implementación C++/GMP. Esta decisión garantiza que las diferencias observadas en los resultados se deban al algoritmo y a la implementación, no a variaciones en los datos de entrada.
 \\
 \\
-Además, se ha trabajado con un flujo de preparación de datos reales procedentes de \textit{Certificate Transparency}. El objetivo de esta parte no es únicamente comprobar que el binario puede leer módulos RSA reales, sino construir un conjunto consolidado a partir de distintas fuentes, normalizarlo, eliminar duplicados y ejecutar el algoritmo completo sobre esos datos.
+Además, se ha trabajado con un flujo de preparación de datos reales procedentes de \textit{Certificate Transparency}. El objetivo de esta parte no es únicamente comprobar que el binario puede leer módulos RSA reales, sino construir un conjunto consolidado a partir de los distintos logs disponibles en \textit{ct-archive}, normalizarlo, eliminar duplicados y ejecutar el algoritmo completo sobre esos datos.
 \\
 \\
-Para ello se ha utilizado como fuente de datos el repositorio público \textit{ct-archive}, que recopila volcados de distintos \textit{Certificate Transparency logs} en forma de archivos comprimidos \cite{geomys2026ctarchive}. En lugar de descargar y conservar de manera permanente todos los certificados, el flujo diseñado trabaja de forma incremental: se descarga un archivo comprimido, se inspecciona su contenido, se extraen únicamente las entradas situadas en la carpeta \texttt{issuer/}, y se obtiene de cada certificado X.509 su módulo RSA y su emisor. Esta decisión reduce el espacio necesario en disco y permite procesar los logs por partes, manteniendo únicamente los resultados intermedios necesarios para continuar el análisis.
+Para ello se ha utilizado como fuente de datos el repositorio público \textit{ct-archive}, que recopila volcados de distintos \textit{Certificate Transparency logs} en forma de archivos comprimidos \citep{geomys2026ctarchive}. En lugar de descargar y conservar de manera permanente todos los certificados, el flujo diseñado trabaja de forma incremental: se descarga un archivo comprimido, se inspecciona su contenido, se extraen únicamente las entradas situadas en la carpeta \texttt{issuer/}, y se obtiene de cada certificado X.509 su módulo RSA y su emisor.
 \\
 \\
-El campo de módulo se extrae mediante OpenSSL y se almacena en formato hexadecimal. Además del módulo, se conserva también el emisor del certificado, de modo que la salida intermedia contiene pares de la forma \texttt{modulo||issuer}. Esta información adicional no es necesaria para ejecutar el algoritmo \textit{batch GCD}, pero sí resulta útil para interpretar posteriormente cualquier factor compartido encontrado, ya que permitiría relacionar los módulos vulnerables con las autoridades certificadoras o intermediarias que aparecen en los certificados analizados.
+La elección de \texttt{issuer/} responde a una decisión de alcance y viabilidad. Estos directorios proporcionan certificados de autoridades certificadoras e intermediarias directamente procesables, cuyas claves resultan relevantes porque pueden intervenir en numerosas cadenas de certificación. Además, constituyen un subconjunto considerablemente más manejable que el contenido completo de los logs y permiten conservar la relación entre cada módulo y su emisor. Esta decisión reduce el espacio necesario en disco y permite procesar los logs por partes, manteniendo únicamente los resultados intermedios necesarios para continuar el análisis. No implica, sin embargo, que los certificados hoja carezcan de interés: sus claves RSA también podrían incorporarse a una auditoría más amplia mediante el procesamiento y la decodificación de las entradas completas del log.
+\\
+\\
+El campo de módulo se extrae mediante OpenSSL y se almacena en formato hexadecimal. El comando empleado intenta primero interpretar cada certificado como DER y, si falla, repite la operación como PEM:
+
+\begin{verbatim}
+openssl x509 -inform DER -noout -modulus -issuer -in "$cert" 2>/dev/null \
+|| openssl x509 -inform PEM -noout -modulus -issuer -in "$cert" 2>/dev/null
+\end{verbatim}
+
+La opción \texttt{x509} selecciona el procesamiento de certificados X.509; \texttt{-inform} indica su codificación; \texttt{-noout} evita imprimir el certificado completo; \texttt{-modulus} devuelve el módulo de la clave RSA; \texttt{-issuer} muestra el emisor; y \texttt{-in} identifica el fichero de entrada. La salida intermedia conserva pares de la forma \texttt{modulo||issuer}. El emisor no es necesario para ejecutar \textit{batch GCD}, pero permite relacionar un eventual módulo vulnerable con la autoridad certificadora o intermediaria presente en el certificado.
 \\
 \\
 El proceso incluye una fase de normalización y deduplicación. Muchos certificados pueden contener el mismo módulo RSA, bien por renovaciones, por certificados equivalentes o por presencia repetida en distintos logs. Ejecutar el algoritmo sobre todas esas repeticiones no aporta información criptográfica nueva y aumenta artificialmente el tamaño de entrada. Por ello, antes de lanzar el ataque se genera un archivo final con un único módulo hexadecimal por línea. Este archivo es el que alimenta a la implementación C++.

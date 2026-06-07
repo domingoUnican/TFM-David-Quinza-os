@@ -14,16 +14,16 @@ Threads          : 18 (OpenMP)
 [Fase 1] Arbol de productos + GCD en linea
   Niveles construidos  : 16
   GCDs no triviales    : 0
-  CPU Time             : 23753.25 ms
+  Tiempo transcurrido  : 23753.25 ms
 
 [Fase 2] Agregacion en variable B
   B bit-length         : 1 bits
-  CPU Time             : 0.00 ms
+  Tiempo transcurrido  : 0.00 ms
 
 
 [Fase 3] Enumeracion final
   Claves vulnerables   : 0
-  CPU Time             : 2.96 ms
+  Tiempo transcurrido  : 2.96 ms
 
 ============================================
  Tiempo total algoritmo: 23756.22 ms

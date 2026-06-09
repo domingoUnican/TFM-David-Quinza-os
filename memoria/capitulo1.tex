@@ -15,8 +15,42 @@ La criptografía moderna combina estas primitivas asimétricas con algoritmos si
 \\
 \\
 Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados históricamente ha sido RSA. Su seguridad se basa en la dificultad de factorizar números enteros grandes obtenidos como producto de dos números primos también grandes \citep{rivest1978method}. En condiciones normales, esta dificultad hace que obtener la clave privada a partir de la clave pública resulte inviable en la práctica. Por ello, RSA ha ocupado durante muchos años un papel central dentro de la infraestructura de clave pública y de los certificados digitales utilizados en la Web.
-\\
-\\
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        x=2.7cm,
+        stage/.style={draw, rounded corners=2pt, align=center,
+            text width=2.15cm, minimum height=1.45cm, font=\footnotesize},
+        arrow/.style={-{Latex[length=2.2mm]}, thick},
+        date/.style={font=\scriptsize\bfseries, align=center}
+    ]
+        \node[stage, fill=orange!10] (classical) at (0,0)
+            {\textbf{Cifrados clásicos}\\César y sustitución};
+        \node[stage, fill=gray!12] (mechanical) at (1,0)
+            {\textbf{Cifrado mecánico}\\Máquinas como Enigma};
+        \node[stage, fill=green!10] (symmetric) at (2,0)
+            {\textbf{Criptografía simétrica}\\DES y AES};
+        \node[stage, fill=blue!9] (exchange) at (3,0)
+            {\textbf{Intercambio de claves}\\Diffie--Hellman};
+        \node[stage, fill=violet!10] (public) at (4,0)
+            {\textbf{Clave pública}\\RSA, TLS y certificados};
+
+        \draw[arrow] (classical) -- (mechanical);
+        \draw[arrow] (mechanical) -- (symmetric);
+        \draw[arrow] (symmetric) -- (exchange);
+        \draw[arrow] (exchange) -- (public);
+
+        \node[date, above=0.25cm of classical] {Antigüedad};
+        \node[date, above=0.25cm of mechanical] {Siglo XX};
+        \node[date, above=0.25cm of symmetric] {Década de 1970};
+        \node[date, above=0.25cm of exchange] {Desde 1976};
+        \node[date, above=0.25cm of public] {Desde 1977};
+    \end{tikzpicture}
+    \caption{Evolución simplificada desde los cifrados clásicos hasta la criptografía moderna de clave pública.}
+    \label{fig:evolucion_criptografia}
+\end{figure}
+
 No obstante, la seguridad de RSA no depende únicamente de su fundamento matemático, sino también de cómo se generan las claves en la práctica. Trabajos previos han mostrado que errores en este proceso pueden dar lugar a claves vulnerables, lo que convierte el análisis de implementaciones reales en una cuestión especialmente relevante desde el punto de vista de la ciberseguridad \citep{heninger2012mining,vage2022finding,pelofske2024efficient}.
 \\
 \\
@@ -35,8 +69,32 @@ A partir de esta base, se reproducirá, a una escala compatible con los recursos
 \\
 \\
 El trabajo combinará así revisión teórica, reproducción experimental, desarrollo algorítmico y aplicación sobre datos reales. Desde el punto de vista de la ciberseguridad, permitirá estudiar una vulnerabilidad concreta pero con consecuencias graves, ya que una generación deficiente de claves puede comprometer completamente la seguridad de RSA. Al mismo tiempo, situará el análisis en un escenario aplicado, en el que no basta con que los algoritmos sean seguros en teoría, sino que también deben poder evaluarse de forma eficiente sobre claves utilizadas en la práctica.
-\\
-\\
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.35cm,
+        flowbox/.style={draw, rounded corners=2pt, align=center,
+            text width=8.7cm, minimum height=0.72cm, font=\small},
+        flow/.style={-{Latex[length=2.4mm]}, thick}
+    ]
+        \node[flowbox, fill=blue!9] (ct)
+            {\textbf{Certificate Transparency logs}\\Fuente pública de certificados};
+        \node[flowbox, fill=green!10, below=of ct] (extract)
+            {\textbf{Extracción y preparación}\\Certificados X.509, módulos RSA, normalización y deduplicación};
+        \node[flowbox, fill=orange!12, below=of extract] (algorithm)
+            {\textbf{Binary Tree Batch GCD}\\Búsqueda eficiente de divisores comunes no triviales};
+        \node[flowbox, fill=red!10, below=of algorithm] (detect)
+            {\textbf{Resultado de la auditoría}\\Identificación de módulos que comparten factores primos};
+
+        \draw[flow] (ct) -- (extract);
+        \draw[flow] (extract) -- (algorithm);
+        \draw[flow] (algorithm) -- (detect);
+    \end{tikzpicture}
+    \caption{Visión global del problema y del flujo seguido en el TFM.}
+    \label{fig:vision_global_tfm}
+\end{figure}
+
 \section{Estructura del documento}
 
 El resto del documento se organiza del siguiente modo. El

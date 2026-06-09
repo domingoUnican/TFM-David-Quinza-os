@@ -326,9 +326,41 @@ La descarga se realiza mediante HTTP con reanudación, en lugar de basarse direc
 \\
 \\
 Este paso es importante porque conecta la parte algorítmica con el objetivo aplicado del TFM. La implementación no se plantea únicamente como una reproducción de un experimento sintético, sino como la base para ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. En este trabajo, la extracción incremental de módulos desde \textit{CT logs} se consolida finalmente en un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP.
-\[
-\mbox{CT logs} \longrightarrow \mbox{certificados X.509} \longrightarrow \mbox{\texttt{modulo||issuer}} \longrightarrow \mbox{módulos únicos} \longrightarrow \mbox{\texttt{batch\_gcd\_real}}
-\]
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.28cm,
+        flowbox/.style={draw, rounded corners=2pt, align=center,
+            text width=9.1cm, minimum height=0.66cm, font=\footnotesize},
+        flow/.style={-{Latex[length=2.3mm]}, thick}
+    ]
+        \node[flowbox, fill=blue!9] (archive)
+            {\textbf{\textit{ct-archive}}\\Selección de logs y archivos ZIP};
+        \node[flowbox, fill=blue!6, below=of archive] (download)
+            {\textbf{Descarga incremental}\\Reanudación, validación de ZIP y registro de estado};
+        \node[flowbox, fill=green!10, below=of download] (issuer)
+            {\textbf{Extracción de \texttt{issuer/}}\\Certificados X.509 de autoridades e intermediarios};
+        \node[flowbox, fill=green!7, below=of issuer] (openssl)
+            {\textbf{Procesamiento con OpenSSL}\\Obtención de \texttt{modulo||issuer} en formato hexadecimal};
+        \node[flowbox, fill=orange!12, below=of openssl] (clean)
+            {\textbf{Normalización y deduplicación}\\Un módulo válido y único por línea};
+        \node[flowbox, fill=red!9, below=of clean] (input)
+            {\textbf{Entrada final}\\54.275 módulos RSA plausibles};
+        \node[flowbox, fill=red!13, below=of input] (audit)
+            {\textbf{Binary Tree Batch GCD}\\Auditoría con la implementación C++17/GMP/OpenMP};
+
+        \draw[flow] (archive) -- (download);
+        \draw[flow] (download) -- (issuer);
+        \draw[flow] (issuer) -- (openssl);
+        \draw[flow] (openssl) -- (clean);
+        \draw[flow] (clean) -- (input);
+        \draw[flow] (input) -- (audit);
+    \end{tikzpicture}
+    \caption{Pipeline de extracción, preparación y análisis de los módulos RSA reales procedentes de \textit{ct-archive}.}
+    \label{fig:pipeline_ct_archive}
+\end{figure}
+
 Desde el punto de vista de la documentación del trabajo, no consideramos conveniente incluir en el cuerpo principal del TFM las celdas completas del notebook ni los listados íntegros del código fuente, ya que eso dificultaría la lectura del documento y rompería el hilo expositivo. En su lugar, en este capítulo nos limitamos a describir la lógica general de la implementación y a comentar las decisiones técnicas más relevantes. Los notebooks, los binarios y los resultados generados se mantienen como material complementario del trabajo.
 \\
 \\

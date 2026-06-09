@@ -45,6 +45,44 @@ y el descifrado mediante
 m \equiv c^d \;(\mathrm{mod}\ N)
 \]
 
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        scale=0.95,
+        transform shape,
+        node distance=0.32cm,
+        flowbox/.style={draw, rounded corners=2pt, align=center,
+            text width=8.7cm, minimum height=0.7cm, font=\small},
+        key/.style={draw, rounded corners=2pt, align=center,
+            text width=3.7cm, minimum height=0.8cm, font=\small},
+        flow/.style={-{Latex[length=2.3mm]}, thick}
+    ]
+        \node[flowbox, fill=violet!9] (primes)
+            {\textbf{1. Elegir dos primos grandes e independientes}\\\(p\) y \(q\)};
+        \node[flowbox, fill=violet!9, below=of primes] (modulus)
+            {\textbf{2. Calcular el módulo y la función de Euler}\\
+            \(N=pq\), \quad \(\varphi(N)=(p-1)(q-1)\)};
+        \node[flowbox, fill=violet!9, below=of modulus] (publicexp)
+            {\textbf{3. Elegir el exponente público}\\
+            \(\gcd(e,\varphi(N))=1\)};
+        \node[flowbox, fill=violet!9, below=of publicexp] (privateexp)
+            {\textbf{4. Calcular el exponente privado}\\
+            \(ed\equiv 1\;(\mathrm{mod}\ \varphi(N))\)};
+        \node[key, fill=green!11, below left=0.55cm and 0.35cm of privateexp]
+            (publickey) {\textbf{Clave pública}\\\((N,e)\)};
+        \node[key, fill=orange!12, below right=0.55cm and 0.35cm of privateexp]
+            (privatekey) {\textbf{Clave privada}\\\(d\) y parámetros asociados};
+
+        \draw[flow] (primes) -- (modulus);
+        \draw[flow] (modulus) -- (publicexp);
+        \draw[flow] (publicexp) -- (privateexp);
+        \draw[flow] (privateexp) -- (publickey);
+        \draw[flow] (privateexp) -- (privatekey);
+    \end{tikzpicture}
+    \caption{Proceso simplificado de generación de un par de claves RSA.}
+    \label{fig:generacion_clave_rsa}
+\end{figure}
+
 La fortaleza de RSA se apoya, por tanto, en que multiplicar dos primos grandes es sencillo, mientras que recuperar esos primos a partir únicamente de \(N\) es un problema computacionalmente muy costoso en condiciones normales \citep{rivest1978method}. Por este motivo, RSA ha sido durante muchos años uno de los algoritmos más utilizados en certificados digitales y en infraestructuras de clave pública dentro de la Web.
 \\
 \\
@@ -76,8 +114,38 @@ entonces ambos comparten el factor primo \(p\). En ese caso, basta calcular
 \]
 
 para recuperar directamente ese factor común. Una vez conocido, la factorización de ambos módulos resulta inmediata y, con ello, también la reconstrucción de la información necesaria para comprometer las claves privadas asociadas. Por tanto, dos claves RSA que compartan un factor dejan de ser seguras de forma prácticamente instantánea.
-\\
-\\
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        modulus/.style={draw, rounded corners=2pt, align=center,
+            text width=3.5cm, minimum height=1.05cm, font=\small},
+        factor/.style={draw, circle, align=center, minimum size=1.65cm,
+            fill=orange!14, font=\small},
+        result/.style={draw, rounded corners=2pt, align=center,
+            text width=4.3cm, minimum height=0.9cm, fill=red!10, font=\small},
+        flow/.style={-{Latex[length=2.3mm]}, thick}
+    ]
+        \node[modulus, fill=blue!9] (n1) at (-3.2,1.6)
+            {\textbf{Módulo 1}\\\(N_1=pq_1\)};
+        \node[modulus, fill=green!10] (n2) at (3.2,1.6)
+            {\textbf{Módulo 2}\\\(N_2=pq_2\)};
+        \node[factor] (p) at (0,0.55)
+            {\(p\)\\{\scriptsize factor común}};
+        \node[result] (gcd) at (0,-1.2)
+            {\(\gcd(N_1,N_2)=p\)\\
+            \(1<p<N_1,N_2\)};
+
+        \draw[flow] (n1) -- (p);
+        \draw[flow] (n2) -- (p);
+        \draw[flow] (p) -- (gcd);
+        \node[below=0.12cm of n1, font=\scriptsize] {\(q_1\) permanece privado};
+        \node[below=0.12cm of n2, font=\scriptsize] {\(q_2\) permanece privado};
+    \end{tikzpicture}
+    \caption{Ejemplo de dos módulos RSA que comparten un factor primo. El cálculo del GCD revela directamente dicho factor.}
+    \label{fig:factor_compartido}
+\end{figure}
+
 El interés del GCD en este trabajo no está solo en esta propiedad, sino también en que puede calcularse de forma muy eficiente mediante el algoritmo de Euclides. Este algoritmo se basa en una idea sencilla: el máximo común divisor de dos números no cambia si sustituimos el mayor por el resto de dividirlo entre el menor. Repitiendo este proceso de manera sucesiva se llega rápidamente a un resto cero, y el último resto no nulo es precisamente el máximo común divisor.
 \\
 \\
@@ -103,8 +171,36 @@ En este contexto, la entropía hace referencia al grado de imprevisibilidad disp
 \\
 \\
 Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave \citep{pelofske2024efficient}. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque.
-\\
-\\
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.38cm,
+        flowbox/.style={draw, rounded corners=2pt, align=center,
+            text width=8.4cm, minimum height=0.72cm, font=\small},
+        flow/.style={-{Latex[length=2.3mm]}, thick}
+    ]
+        \node[flowbox, fill=blue!9] (entropy)
+            {\textbf{Entropía insuficiente o generador defectuoso}\\
+            Estado inicial predecible, errores de implementación o pocos datos aleatorios};
+        \node[flowbox, fill=blue!6, below=of entropy] (primes)
+            {\textbf{Generación de primos correlacionados}\\
+            Reutilización accidental o selección predecible de \(p\) y \(q\)};
+        \node[flowbox, fill=orange!12, below=of primes] (shared)
+            {\textbf{Aparición de factores compartidos}\\
+            Distintos módulos contienen un mismo primo};
+        \node[flowbox, fill=red!11, below=of shared] (vulnerable)
+            {\textbf{Claves RSA vulnerables}\\
+            El GCD permite factorizar los módulos afectados};
+
+        \draw[flow] (entropy) -- (primes);
+        \draw[flow] (primes) -- (shared);
+        \draw[flow] (shared) -- (vulnerable);
+    \end{tikzpicture}
+    \caption{Cadena causal entre una generación aleatoria deficiente y la aparición de claves RSA vulnerables.}
+    \label{fig:baja_entropia}
+\end{figure}
+
 La tesis en la que se apoya este trabajo subraya que, en condiciones ideales, la probabilidad de que dos claves RSA distintas reutilicen un mismo primo dentro del enorme espacio de posibles primos de tamaño criptográfico es prácticamente nula \citep{vage2022finding}. Por eso, cuando en la práctica aparecen factores compartidos entre módulos públicos, no estamos ante una simple casualidad matemática, sino ante una señal muy clara de que ha existido un fallo en el proceso de generación.
 \\
 \\

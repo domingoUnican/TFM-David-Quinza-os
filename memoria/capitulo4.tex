@@ -121,28 +121,34 @@ Una vez introducido el fundamento general de los métodos \textit{batch GCD}, en
 El artículo de Pelofske define el algoritmo en tres pasos principales. En primer lugar, se construye un árbol binario de productos a partir del conjunto de módulos RSA de entrada. En segundo lugar, se toma el producto de todos los valores de \textit{gcd} obtenidos durante la construcción del árbol y se agrupan en un único entero, que el artículo denota por \(B\). En tercer lugar, se enumera el conjunto original de módulos y se calcula el \textit{gcd} entre cada uno de ellos y \(B\), de modo que los resultados no triviales permiten recuperar los factores compartidos \citep{pelofske2024efficient}.
 \\
 \\
-Si denotamos por
+La Figura~\ref{fig:pseudocodigo_binary_tree} resume la secuencia completa: los productos avanzan por el árbol, los máximos comunes divisores se acumulan en \(B\) y, al alcanzar la raíz, se comprueba cada módulo de entrada.
 
-\[
-N = \{N_1, N_2, \dots, N_M\}
-\]
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.76\textwidth}
+\begin{Verbatim}[fontsize=\footnotesize, frame=single, framesep=2.5mm]
+Entrada: modulos RSA N[1..M]
+nivel <- N
+B <- 1
+mientras tamano(nivel) > 1:
+    siguiente <- []
+    para cada pareja (A, C) de nivel:
+        B <- B * gcd(A, C)
+        siguiente.anadir(A * C)
+    si queda un nodo sin pareja:
+        siguiente.anadir(nodo)
+    nivel <- siguiente
+para cada modulo N_i:
+    factor <- gcd(N_i, B)
+    si 1 < factor < N_i:
+        informar(N_i, factor)
+\end{Verbatim}
+    \end{minipage}
+    \caption{Pseudocódigo simplificado del algoritmo \textit{Binary Tree Batch GCD}.}
+    \label{fig:pseudocodigo_binary_tree}
+\end{figure}
 
-el conjunto de módulos RSA que queremos analizar, la idea básica del algoritmo consiste en no comparar cada par de módulos de manera aislada, sino organizar el cálculo de forma jerárquica. Para ello, en el nivel más bajo del árbol se agrupan los módulos por parejas. Para cada pareja se realizan dos operaciones: por un lado, se calcula su máximo común divisor y, por otro, se calcula su producto. Los productos obtenidos pasan al siguiente nivel del árbol, mientras que los \textit{gcd} calculados se conservan como parte de la información que luego se agregará en \(B\).
-\\
-\\
-En los niveles superiores se repite la misma idea, pero ya no con módulos individuales, sino con los productos generados en el nivel anterior. Si en un cierto nivel tenemos dos nodos con valores \(A\) y \(C\), se calcula
-
-\[
-\gcd(A,C)
-\]
-
-y, salvo en la raíz, también se calcula el producto
-
-\[
-A \cdot C
-\]
-
-para construir el nodo padre. Este procedimiento se aplica de forma recursiva hasta alcanzar la parte superior del árbol.
+Sea \(N=\{N_1,N_2,\dots,N_M\}\) el conjunto de módulos de entrada. En el nivel inferior se agrupan por parejas y, para cada par \((A,C)\), se calculan simultáneamente \(\gcd(A,C)\) y el producto \(A\cdot C\). El máximo común divisor se incorpora a \(B\), mientras que el producto forma el nodo padre. La misma operación se repite sobre los productos de cada nivel hasta alcanzar la raíz; si un nivel contiene un número impar de nodos, el elemento sin pareja se propaga al siguiente sin modificar.
 
 \begin{figure}[htbp]
     \centering

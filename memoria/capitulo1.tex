@@ -9,12 +9,6 @@ Sin embargo, todos estos métodos compartían una característica común: se tra
 \\
 \\
 Para dar respuesta a este problema surgió la criptografía asimétrica, basada en el uso de dos claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto \citep{rivest1978method}. Gracias a este modelo, hoy es posible establecer comunicaciones seguras sin necesidad de haber intercambiado previamente una clave secreta. Además, la criptografía asimétrica permite no solo cifrar información, sino también autenticar identidades y firmar digitalmente mensajes, por lo que se ha convertido en una herramienta fundamental dentro de la seguridad informática.
-\\
-\\
-La criptografía moderna combina estas primitivas asimétricas con algoritmos simétricos, funciones resumen, códigos de autenticación y protocolos diseñados para alcanzar propiedades concretas de confidencialidad, integridad y autenticación \citep{menezes1996handbook}. En una conexión web actual, por ejemplo, la criptografía de clave pública permite autenticar al servidor y acordar secretos, mientras que el intercambio posterior de datos se protege con cifrado simétrico por su mayor eficiencia. Por ello, la seguridad práctica no depende de un único algoritmo, sino de la correcta composición de claves, certificados, protocolos e implementaciones.
-\\
-\\
-Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados históricamente ha sido RSA. Su seguridad se basa en la dificultad de factorizar números enteros grandes obtenidos como producto de dos números primos también grandes \citep{rivest1978method}. En condiciones normales, esta dificultad hace que obtener la clave privada a partir de la clave pública resulte inviable en la práctica. Por ello, RSA ha ocupado durante muchos años un papel central dentro de la infraestructura de clave pública y de los certificados digitales utilizados en la Web.
 
 \begin{figure}[H]
     \centering
@@ -51,6 +45,15 @@ Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados histó
     \label{fig:evolucion_criptografia}
 \end{figure}
 
+La evolución resumida en la Figura~\ref{fig:evolucion_criptografia} no representa una sustitución completa de unas técnicas por otras, sino una ampliación progresiva de las herramientas disponibles. La aparición de la criptografía de clave pública permitió abordar problemas de distribución de claves y autenticación que limitaban a los sistemas anteriores, y preparó el terreno para el uso de RSA, TLS y los certificados digitales en la Web.
+\\
+\\
+La criptografía moderna combina estas primitivas asimétricas con algoritmos simétricos, funciones resumen, códigos de autenticación y protocolos diseñados para alcanzar propiedades concretas de confidencialidad, integridad y autenticación \citep{menezes1996handbook}. En una conexión web actual, por ejemplo, la criptografía de clave pública permite autenticar al servidor y acordar secretos, mientras que el intercambio posterior de datos se protege con cifrado simétrico por su mayor eficiencia. Por ello, la seguridad práctica no depende de un único algoritmo, sino de la correcta composición de claves, certificados, protocolos e implementaciones.
+\\
+\\
+Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados históricamente ha sido RSA. Su seguridad se basa en la dificultad de factorizar números enteros grandes obtenidos como producto de dos números primos también grandes \citep{rivest1978method}. En condiciones normales, esta dificultad hace que obtener la clave privada a partir de la clave pública resulte inviable en la práctica. Por ello, RSA ha ocupado durante muchos años un papel central dentro de la infraestructura de clave pública y de los certificados digitales utilizados en la Web.
+\\
+\\
 No obstante, la seguridad de RSA no depende únicamente de su fundamento matemático, sino también de cómo se generan las claves en la práctica. Trabajos previos han mostrado que errores en este proceso pueden dar lugar a claves vulnerables, lo que convierte el análisis de implementaciones reales en una cuestión especialmente relevante desde el punto de vista de la ciberseguridad \citep{heninger2012mining,vage2022finding,pelofske2024efficient}.
 \\
 \\
@@ -69,23 +72,26 @@ A partir de esta base, se reproducirá, a una escala compatible con los recursos
 \\
 \\
 El trabajo combinará así revisión teórica, reproducción experimental, desarrollo algorítmico y aplicación sobre datos reales. Desde el punto de vista de la ciberseguridad, permitirá estudiar una vulnerabilidad concreta pero con consecuencias graves, ya que una generación deficiente de claves puede comprometer completamente la seguridad de RSA. Al mismo tiempo, situará el análisis en un escenario aplicado, en el que no basta con que los algoritmos sean seguros en teoría, sino que también deben poder evaluarse de forma eficiente sobre claves utilizadas en la práctica.
+\\
+\\
+La combinación de experimentos sintéticos y certificados reales responde a dos necesidades complementarias. Los primeros permiten comprobar el comportamiento del algoritmo en condiciones controladas y comparar las distintas implementaciones sobre entradas equivalentes; los segundos permiten valorar su utilidad sobre claves públicas procedentes de un entorno efectivamente desplegado. El alcance del trabajo une así validación experimental y aplicación práctica, sin pretender extrapolar los resultados más allá del conjunto de certificados finalmente analizado.
 
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
-        node distance=0.35cm,
+        node distance=0.42cm,
         flowbox/.style={draw, rounded corners=2pt, align=center,
-            text width=8.7cm, minimum height=0.72cm, font=\small},
-        flow/.style={-{Latex[length=2.4mm]}, thick}
+            text width=3.15cm, minimum height=1.2cm, font=\footnotesize},
+        flow/.style={-{Latex[length=2.2mm]}, thick}
     ]
         \node[flowbox, fill=blue!9] (ct)
-            {\textbf{Certificate Transparency logs}\\Fuente pública de certificados};
-        \node[flowbox, fill=green!10, below=of ct] (extract)
-            {\textbf{Extracción y preparación}\\Certificados X.509, módulos RSA, normalización y deduplicación};
-        \node[flowbox, fill=orange!12, below=of extract] (algorithm)
-            {\textbf{Binary Tree Batch GCD}\\Búsqueda eficiente de divisores comunes no triviales};
-        \node[flowbox, fill=red!10, below=of algorithm] (detect)
-            {\textbf{Resultado de la auditoría}\\Identificación de módulos que comparten factores primos};
+            {\textbf{CT logs}\\Fuente pública de certificados};
+        \node[flowbox, fill=green!10, right=of ct] (extract)
+            {\textbf{Preparación de datos}\\Extracción, validación y deduplicación};
+        \node[flowbox, fill=orange!12, right=of extract] (algorithm)
+            {\textbf{Binary Tree Batch GCD}\\Análisis eficiente de los módulos};
+        \node[flowbox, fill=red!10, right=of algorithm] (detect)
+            {\textbf{Resultado}\\Identificación de factores compartidos};
 
         \draw[flow] (ct) -- (extract);
         \draw[flow] (extract) -- (algorithm);

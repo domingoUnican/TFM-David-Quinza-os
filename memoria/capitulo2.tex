@@ -45,7 +45,7 @@ y el descifrado mediante
 m \equiv c^d \;(\mathrm{mod}\ N)
 \]
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         scale=0.95,
@@ -115,7 +115,7 @@ entonces ambos comparten el factor primo \(p\). En ese caso, basta calcular
 
 para recuperar directamente ese factor común. Una vez conocido, la factorización de ambos módulos resulta inmediata y, con ello, también la reconstrucción de la información necesaria para comprometer las claves privadas asociadas. Por tanto, dos claves RSA que compartan un factor dejan de ser seguras de forma prácticamente instantánea.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         modulus/.style={draw, rounded corners=2pt, align=center,
@@ -172,7 +172,7 @@ En este contexto, la entropía hace referencia al grado de imprevisibilidad disp
 \\
 Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave \citep{pelofske2024efficient}. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         node distance=0.38cm,

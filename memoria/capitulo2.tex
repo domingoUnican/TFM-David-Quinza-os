@@ -12,7 +12,7 @@ No se pretende realizar aquí una exposición exhaustiva de toda la teoría crip
 RSA es uno de los algoritmos más conocidos de criptografía asimétrica y uno de los más influyentes en la historia de la seguridad informática \citep{rivest1978method}. A diferencia de la criptografía simétrica, donde emisor y receptor comparten la misma clave secreta, en criptografía asimétrica cada usuario dispone de un par de claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto.
 \\
 \\
-Este modelo permitió resolver uno de los grandes problemas de la criptografía clásica, que era el intercambio seguro de claves en entornos abiertos. Gracias a ello, hoy es posible establecer comunicaciones seguras, autenticar identidades y firmar digitalmente información sin necesidad de que las partes hayan compartido previamente un secreto común \citep{rivest1978method}.
+Este modelo permitió resolver uno de los grandes problemas de la criptografía clásica, que era el intercambio seguro de claves en entornos abiertos. Gracias a ello, hoy es posible establecer comunicaciones seguras, autenticar identidades y firmar digitalmente información sin necesidad de que las partes hayan compartido previamente un secreto común.
 \\
 \\
 En el caso de RSA, la seguridad del sistema se basa en la dificultad de factorizar un número entero grande obtenido como producto de dos números primos también grandes. Si denotamos estos primos por \(p\) y \(q\), el módulo RSA se construye como
@@ -167,10 +167,10 @@ En el contexto de este TFM, el máximo común divisor desempeña un doble papel.
 Aunque RSA es un esquema sólido desde el punto de vista matemático, su seguridad práctica depende de que la generación de claves se realice correctamente. En particular, para construir una clave RSA segura es necesario que los números primos \(p\) y \(q\) se generen de manera suficientemente aleatoria e independiente. Si esta condición no se cumple, pueden aparecer relaciones inesperadas entre distintas claves públicas, incluyendo la reutilización accidental de factores primos \citep{heninger2012mining,vage2022finding,pelofske2024efficient}.
 \\
 \\
-En este contexto, la entropía hace referencia al grado de imprevisibilidad disponible en el sistema para alimentar el proceso de generación aleatoria. En un entorno bien diseñado, esa entropía permite producir candidatos a primos que sean efectivamente impredecibles. Sin embargo, en sistemas reales esto no siempre ocurre. Una baja entropía durante la generación de primos puede hacer que distintas claves RSA compartan factores, lo que compromete completamente su seguridad \citep{vage2022finding,pelofske2024efficient}.
+En este contexto, la entropía hace referencia al grado de imprevisibilidad disponible en el sistema para alimentar el proceso de generación aleatoria. En un entorno bien diseñado, esa entropía permite producir candidatos a primos que sean efectivamente impredecibles. Sin embargo, en sistemas reales esto no siempre ocurre. Una baja entropía durante la generación de primos puede hacer que distintas claves RSA compartan factores, lo que compromete completamente su seguridad.
 \\
 \\
-Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave \citep{pelofske2024efficient}. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque.
+Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque.
 
 \begin{figure}[H]
     \centering
@@ -259,7 +259,7 @@ En la práctica, este mecanismo es uno de los pilares de TLS, el protocolo utili
         \draw[arrow] (keys) -- (channel);
         \draw[arrow] (trust) -- (verify);
     \end{tikzpicture}
-    \caption{Esquema simplificado del establecimiento de una conexión TLS. Elaboración propia a partir de RFC 8446 \citep{rfc8446}.}
+    \caption{Esquema simplificado del establecimiento de una conexión TLS. Elaboración propia a partir de RFC 8446.}
     \label{fig:conexion_tls}
 \end{figure}
 En este contexto surge \textit{Certificate Transparency}, un marco diseñado para aportar mayor transparencia al ecosistema de certificación web. Su idea principal es que los certificados emitidos por las autoridades certificadoras queden registrados en logs públicos, verificables y de solo anexado, de manera que su emisión pueda ser observada y supervisada por terceros \citep{rfc9162}. Esto dificulta que una autoridad certificadora emita certificados incorrectos o fraudulentos sin que nadie pueda detectarlo.

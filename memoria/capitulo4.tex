@@ -335,7 +335,7 @@ El proceso incluye una fase de normalización y deduplicación. Muchos certifica
 Durante la extracción se mantiene también un registro del estado de cada ZIP. Los archivos procesados, los que fallan y los que aparentemente no contienen entradas \texttt{issuer/} se registran por separado, evitando descartar de forma prematura descargas incompletas o archivos que requieren soporte adecuado para Zip64. La descarga se realiza mediante HTTP con reanudación, en lugar de basarse directamente en los enlaces Torrent disponibles en la misma fuente, porque el flujo necesita controlar cada ZIP de manera independiente, registrar su estado y liberar espacio cuando deja de ser necesario.
 \\
 \\
-Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. La extracción incremental desde \textit{CT logs} genera un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP. La Figura~\ref{fig:pipeline_ct_archive} resume el flujo.
+Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. La extracción incremental desde \textit{CT logs} genera un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP. La Figura~\ref{fig:pipeline_ct_archive} resume el flujo y sirve de enlace con los resultados del capítulo siguiente.
 
 \begin{figure}[H]
     \centering
@@ -371,6 +371,3 @@ Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ej
     \caption{Pipeline de datos reales: azul=descarga, verde=extracción, naranja=normalización y rojo=auditoría.}
     \label{fig:pipeline_ct_archive}
 \end{figure}
-
-\clearpage
-En la memoria no se incluyen notebooks ni listados completos para no romper el hilo expositivo. El capítulo recoge la lógica y las decisiones técnicas principales; sobre esta implementación se apoyan los resultados del capítulo siguiente, con datos sintéticos y módulos RSA reales de \textit{CT logs}.

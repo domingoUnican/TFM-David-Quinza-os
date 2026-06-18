@@ -274,9 +274,6 @@ La segunda fase consiste en la agregación de todos los divisores comunes no tri
 \\
 \\
 La tercera fase corresponde a la enumeración final sobre el conjunto original de módulos. Para cada \(N_i\), se calcula \(\gcd(N_i,B)\) y se comprueba si el resultado es no trivial. Esta fase es especialmente adecuada para una posible paralelización, ya que cada comprobación puede realizarse de forma independiente sobre módulos distintos. Por esta razón, la implementación incluye soporte opcional para OpenMP, aunque el diseño del algoritmo no depende de dicha paralelización.
-\\
-\\
-La Figura~\ref{fig:modulos_implementacion} resume el flujo de la implementación, desde las fuentes de entrada hasta la salida de factores, tiempos y memoria. Esta separación permite utilizar la misma implementación tanto con conjuntos sintéticos como con módulos extraídos de certificados reales.
 
 \begin{figure}[H]
     \centering

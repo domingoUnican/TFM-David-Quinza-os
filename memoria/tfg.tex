@@ -3,7 +3,12 @@
 \usepackage{tikz}
 \usepackage{float}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,fit}
-\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
+\renewcommand\spanishtablename{Tabla}
+\renewcommand\spanishlisttablename{Índice de tablas}
+\addto\captionsspanish{%
+  \renewcommand{\tablename}{Tabla}%
+  \renewcommand{\listtablename}{Índice de tablas}%
+}
 
 \autor{David Quinzaños Saiz}
 \titulo{Búsqueda de factores RSA compartidos en los registros de Transparencia de Certificados:

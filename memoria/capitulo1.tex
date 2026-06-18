@@ -3,13 +3,17 @@
 \section{Contexto y motivación}
 
 La necesidad de proteger la información y mantener el secreto de las comunicaciones ha existido desde hace siglos. Ya en la Antigüedad se empleaban métodos sencillos para dificultar la lectura de los mensajes por parte de terceros, siendo los más conocidos el cifrado César y el criptosistema de Vigenère. Más adelante, durante la Segunda Guerra Mundial, se abrió la era computacional de la criptografía y máquinas como Enigma demostraron hasta qué punto esta disciplina podía ser decisiva en contextos militares y estratégicos. El trabajo de Alan Turing sentó muchas de las ideas fundamentales de la criptografía y la informática moderna, en las que la computación permite poner a prueba la seguridad de los sistemas criptográficos.
-
+\\
+\\
 Sin embargo, todos estos métodos compartían una característica común: se trataba de sistemas de criptografía simétrica, es decir, emisor y receptor debían conocer previamente la misma clave secreta. Este enfoque puede funcionar en escenarios reducidos, pero plantea problemas evidentes cuando el número de usuarios crece. En el contexto actual, donde millones de personas se conectan continuamente a servicios en Internet, repartir de forma segura una misma clave entre todas las partes resulta inviable, considerando además que la seguridad de estos sistemas reside en el tamaño de clave en bits. Ejemplos de sistemas criptográficos modernos de clave simétrica son los criptosistemas de bloque como DES, 3DES y fundamentalmente AES \citep{nist_fips197_upd1}.
-
+\\
+\\
 Para dar respuesta a este problema surgió la criptografía asimétrica propuesta por Diffie-Hellman, basada en el uso de dos claves relacionadas matemáticamente: una clave pública, que puede compartirse libremente, y una clave privada, que debe mantenerse en secreto \citep{rivest1978method}. Gracias a este modelo, hoy es posible establecer comunicaciones seguras sin necesidad de haber intercambiado previamente una clave secreta, tan solo mediante la publicación de la clave pública de forma confiable. Además, la criptografía asimétrica permite no solo cifrar información, sino también autenticar identidades y firmar digitalmente mensajes, por lo que los criptosistemas de clave pública se han convertido en una herramienta fundamental dentro de la seguridad informática.
-
+\\
+\\
 La criptografía moderna combina estas primitivas asimétricas con algoritmos simétricos, funciones resumen, códigos de autenticación y protocolos diseñados para alcanzar propiedades concretas de confidencialidad, integridad y autenticación \citep{menezes1996handbook}. En una conexión web actual, por ejemplo, la criptografía de clave pública permite autenticar al servidor y acordar secretos, mientras que el intercambio posterior de datos se protege con cifrado simétrico por su mayor eficiencia. Por ello, la seguridad práctica no depende de un único algoritmo, sino de la correcta composición del reparto de claves, uso de certificados electrónicos, protocolos e implementaciones.
-
+\\
+\\
 Según \cite{aumasson2024serious}, un certificado es una clave pública acompañada de una firma sobre ella, además de otra información asociada. Como veremos, estos certificados en Internet permiten un uso de la Web seguro y confiable. Por ejemplo, para que un navegador web pueda confiar en una clave pública, es necesario que pueda verificar que esta pertenece a la entidad con la que se quiere comunicar (por ejemplo www.unican.es). En este caso es necesaria una firma electrónica que permita verificar la vinculación con el dominio, siendo este el papel de la entidad de certificación o «certificate authority» (CA). En el caso de la Universidad de Cantabria, la entidad certificadora puede consultarse desde el propio navegador web (ver Figura~\ref{fig:ejemplo_certificado}), ya que los navegadores incluyen de serie los certificados raíz de las autoridades reconocidas.
 
 \begin{figure}[htbp]
@@ -20,7 +24,6 @@ Según \cite{aumasson2024serious}, un certificado es una clave pública acompañ
 \end{figure}
 
 El esquema de la evolución de los sistemas criptográficos de la Figura~\ref{fig:evolucion_criptografia} no representa una sustitución completa de unas técnicas por otras, sino una ampliación progresiva de las herramientas disponibles. La aparición de la criptografía de clave pública permitió abordar problemas de distribución de claves y autenticación que limitaban a los sistemas anteriores, y preparó el terreno para el uso de RSA, TLS y los certificados electrónicos en la Web.
-
 
 \begin{figure}[H]
     \centering
@@ -67,21 +70,27 @@ Por otro lado, queremos introducir brevemente el protocolo de comunicación \tex
 \end{figure}
 
 Por último, introduciremos el concepto de \textit{Web Public Key Infrastructure} (Web PKI). Se trata del ecosistema que hace posible la confianza en los certificados de la Web: lo componen las autoridades certificadoras que emiten y firman certificados, los navegadores y sistemas operativos que mantienen almacenes de certificados raíz de confianza, los servidores que presentan sus certificados durante el establecimiento de conexiones TLS y los mecanismos de supervisión y revocación que vigilan el correcto funcionamiento del conjunto. En este ecosistema, la seguridad no depende de un único actor, sino de que cada componente cumpla su papel: una autoridad certificadora que emita certificados incorrectos, o una clave pública generada de forma deficiente, puede comprometer la confianza de toda la cadena. Precisamente para reforzar la supervisión de este ecosistema surge \textit{Certificate Transparency}\footnote{\url{https://certificate.transparency.dev/howctworks/\#pki}}.
-
+\\
+\\
 En este contexto, los \textit{Certificate Transparency logs} \footnote{\url{https://certificate.transparency.dev/logs/}} o \textit{CT logs} constituyen una fuente de información especialmente interesante, ya que permiten acceder a grandes volúmenes de certificados reales emitidos para sitios web. Certificate Transparency es un ecosistema en el que los certificados están depositados en logs públicos y distribuidos, lo cual permite a diferentes operadores monitorizarlos de forma transparente. Esto los convierte en una base de datos muy valiosa para estudiar cómo se está desplegando realmente la criptografía en Internet y para detectar posibles debilidades en claves públicas utilizadas en la práctica.
-
+\\
+\\
 Dentro de este ámbito, uno de los algoritmos más conocidos y utilizados históricamente ha sido el esquema RSA. Su seguridad se basa en la dificultad de factorizar números enteros grandes obtenidos como producto de dos números primos también grandes \citep{rivest1978method}. En condiciones normales, esta dificultad hace que obtener la clave privada a partir de la clave pública resulte inviable en la práctica. Por ello, RSA ha ocupado durante muchos años un papel central dentro de la infraestructura de clave pública y de los certificados digitales utilizados en la Web. Aunque RSA está siendo desplazado progresivamente ante la amenaza de la computación cuántica, ya que el algoritmo de Shor permitiría factorizar módulos RSA de forma eficiente en un computador cuántico suficientemente grande \citep{shor1997polynomial}, los organismos de estandarización prevén una transición gradual hacia la criptografía postcuántica \citep{nist2024pqc}, por lo que RSA seguirá presente en sistemas de firma digital y certificados durante los próximos años.
-
+\\
+\\
 No obstante, la seguridad de RSA no depende únicamente de su fundamento matemático, sino también de cómo se generan las claves en la práctica. Trabajos previos han mostrado que errores en este proceso pueden dar lugar a claves vulnerables, lo que convierte el análisis de implementaciones reales en una cuestión especialmente relevante desde el punto de vista de la ciberseguridad \citep{heninger2012mining,vage2022finding,pelofske2024efficient}. Los trabajos previos mostraron el interés de este enfoque y señalaron que todavía existe margen para ampliar el análisis sobre conjuntos de datos mayores \citep{vage2022finding}. Posteriormente se propuso el algoritmo \textit{Binary Tree Batch GCD} como una alternativa más eficiente al enfoque clásico basado en \textit{product tree} y \textit{remainder tree} \citep{pelofske2024efficient}. Disponer de algoritmos de detección cada vez más eficientes resulta, por tanto, esencial para auditar de forma continua la seguridad de los certificados desplegados en el ecosistema digital, y constituye la motivación central de este trabajo.
 
 \section{Objetivos y alcance}
 
 El objetivo general de este trabajo será estudiar la detección eficiente de factores primos compartidos entre módulos RSA y aplicar esta técnica a certificados obtenidos de fuentes públicas de \textit{Certificate Transparency}. Para ello, se revisarán los fundamentos de esta vulnerabilidad y los métodos \textit{batch GCD} utilizados para detectarla, prestando especial atención al algoritmo \textit{Binary Tree Batch GCD} como alternativa al enfoque clásico basado en \textit{product tree} y \textit{remainder tree} que se detallarán en los capítulos posteriores.
-
+\\
+\\
 A partir de esta base, se reproducirá, a una escala compatible con los recursos disponibles, la comparación experimental con una propuesta encontrada en la literatura. Se desarrollará una implementación propia en C++17, cuyas herramientas y decisiones técnicas se detallarán en el capítulo de metodología, y se comprobará que sus resultados coinciden con la implementación de referencia elegida. Se construirá además un flujo para extraer, normalizar, validar y deduplicar módulos RSA procedentes de certificados reales, y se aplicará la implementación al conjunto consolidado para estudiar las diferencias de tiempo de ejecución y consumo máximo de memoria. Los resultados se interpretarán de acuerdo con el alcance de los datos analizados y las limitaciones del diseño experimental.
-
+\\
+\\
 El trabajo combinará así revisión teórica, reproducción experimental, desarrollo algorítmico y aplicación sobre datos reales. Desde el punto de vista de la ciberseguridad, permitirá estudiar una vulnerabilidad concreta pero con consecuencias graves, ya que una generación deficiente de claves puede comprometer completamente la seguridad de RSA. Al mismo tiempo, situará el análisis en un escenario aplicado, en el que no basta con que los algoritmos sean seguros en teoría, sino que también deben poder evaluarse de forma eficiente sobre claves utilizadas en la práctica.
-
+\\
+\\
 La combinación de experimentos sintéticos y certificados reales responde a dos necesidades complementarias. Los primeros permiten comprobar el comportamiento del algoritmo en condiciones controladas y comparar las distintas implementaciones sobre entradas equivalentes; los segundos permiten valorar su utilidad sobre claves públicas procedentes de un entorno efectivamente desplegado. El alcance del trabajo une así validación experimental y aplicación práctica, sin pretender extrapolar los resultados más allá del conjunto de certificados finalmente analizado. Hemos incluido un esquema con el flujo seguido para el análisis de los CT logs en la Figura \ref{fig:vision_global_tfm}.
 
 \begin{figure}[H]

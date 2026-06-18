@@ -3,81 +3,109 @@
 Tras haber presentado los conceptos necesarios para entender este trabajo, en este capítulo revisaremos los principales antecedentes relacionados con el problema.
 En particular, nos centraremos en cómo la literatura ha estudiado las debilidades en la generación de claves RSA, la detección de factores compartidos entre claves públicas y el análisis de este tipo de vulnerabilidades sobre grandes conjuntos de datos reales. Además, revisaremos los enfoques computacionales clásicos utilizados hasta ahora, sus principales limitaciones y la propuesta más reciente en la que se apoya este trabajo, con el fin de situar nuestra aportación a la literatura previa.
 
-
 \section{Detección de factores compartidos en claves públicas RSA}
 
 Como ya hemos explicado en el capítulo anterior, la seguridad práctica de RSA depende en gran medida de que la generación de claves se realice correctamente. Por ello, una de las líneas más importantes dentro de la literatura ha consistido en analizar hasta qué punto problemas de baja entropía o fallos de implementación pueden dar lugar a claves vulnerables en sistemas reales. Uno de los trabajos más influyentes en esta dirección mostró que la existencia de claves débiles no era una posibilidad puramente teórica, sino un problema que podía observarse en dispositivos conectados a Internet \citep{heninger2012mining}. En particular, este trabajo mostró la presencia de claves repetidas y de módulos RSA que compartían factores primos, lo que permitía asociar muchas de estas debilidades a problemas prácticos en la generación de claves. Este resultado es importante porque demuestra que la seguridad de RSA no depende solo de su base matemática, sino también de que las claves se generen en buenas condiciones.
-
+\\
+\\
 Posteriormente, \citet{pelofske2024efficient} profundiza en el estudio de la fase de creación de los primos. Pelofske señala que estos fallos pueden deberse a un uso incorrecto de librerías de generación aleatoria o a la ausencia de una fuente externa de entropía suficiente en el momento de generar la clave. \citet{vage2022finding} recuerda que, en condiciones ideales, la probabilidad de que dos claves RSA distintas reutilicen un mismo primo dentro del enorme espacio de posibles primos criptográficos es prácticamente nula. Desde el punto de vista del estado del arte, esto resulta especialmente importante porque justifica toda una línea de trabajos orientados a auditar claves públicas reales en busca de este tipo de debilidades. En otras palabras, en estudiar si las implementaciones reales respetan las condiciones necesarias para que esa seguridad teórica se mantenga en la práctica.
-
+\\
+\\
 En este sentido, tanto la tesis como el artículo de los que partimos siguen la idea de que la baja entropía y los errores de implementación pueden dar lugar a factores compartidos entre módulos RSA, que constituyen una vulnerabilidad grave que merece ser analizada empíricamente a gran escala \citep{vage2022finding,pelofske2024efficient}. A partir de aquí, el siguiente paso natural dentro de la literatura fue centrarse en cómo detectar de forma eficiente esas claves vulnerables. En este contexto, la presencia de factores compartidos entre módulos públicos se convirtió rápidamente en un objetivo de estudio especialmente relevante, ya que permite identificar claves vulnerables de manera directa. Por ello, la cuestión dejó de ser únicamente si este fenómeno podía ocurrir y pasó a centrarse en cómo encontrar esos casos dentro de grandes colecciones de claves públicas reales.
-
+\\
+\\
 Tal y como plantea \citet{pelofske2024efficient}, el verdadero problema no está en calcular el máximo común divisor entre dos módulos concretos, ya que esa operación es eficiente, sino en que no se conoce de antemano qué pares de claves podrían compartir factores. Esto hace que una búsqueda exhaustiva basada en comparar todos los pares posibles se vuelva rápidamente inviable cuando el número de módulos crece. En conjuntos grandes de claves públicas, el número de comparaciones necesarias aumenta de forma cuadrática al compararse todos los pares posibles, lo que convierte el enfoque de fuerza bruta en una opción poco realista para auditorías a gran escala cuando el número de certificados a comprobar crece.
-
+\\
+\\
 Precisamente por esta razón, la literatura comenzó a desarrollar métodos computacionales específicos para realizar este tipo de análisis de manera más eficiente. En lugar de tratar cada comparación de forma aislada, estos enfoques buscan explotar la estructura global del conjunto de módulos RSA para detectar divisores comunes no triviales con un coste mucho menor que el de una enumeración completa de todos los pares. Un enfoque \textit{batch GCD} se aplicó a grandes colecciones de claves RSA extraídas de \textit{CT logs} \citep{vage2022finding}. Sobre el mismo problema de detección masiva, se propuso después una alternativa más eficiente al método clásico \citep{pelofske2024efficient}. Esta es la idea general que dará lugar a los distintos enfoques de \textit{batch GCD}, que más adelante explicaremos con mayor detalle.
-
+\\
+\\
 Así, dentro del estado del arte, la detección de factores compartidos en claves públicas RSA debe entenderse no solo como una consecuencia natural de las debilidades en la generación de claves, sino también como un problema computacional en sí mismo por el tamaño del espacio de búsqueda. Es precisamente esa doble dimensión, criptográfica por un lado y algorítmica por otro, la que explica el interés que ha despertado este tema en la literatura reciente.
-
+\\
+\\
 A partir de ahí, el siguiente paso fue estudiar cómo analizar conjuntos de datos cada vez mayores de forma eficiente desde el punto de vista computacional, con el objetivo de comprobar hasta qué punto estas debilidades aparecían realmente en sistemas desplegados en Internet.
 
 \section{Análisis masivo de claves débiles en Internet}
 
 Una vez planteado el problema de detectar factores compartidos entre claves públicas RSA, la siguiente evolución natural dentro de la literatura fue trasladar este análisis a conjuntos de datos cada vez mayores. El interés dejó de centrarse únicamente en demostrar que la vulnerabilidad era posible y pasó a orientarse hacia auditorías criptográficas a gran escala, con el objetivo de comprobar hasta qué punto estas debilidades aparecían realmente en sistemas desplegados en Internet y poder aplicar medidas como la generación de nuevas claves o la revocación de certificados.
-
+\\
+\\
 En este contexto, uno de los trabajos más relevantes realizó un escaneo masivo de servicios accesibles en Internet y recopiló millones de claves públicas RSA procedentes principalmente de HTTPS y SSH \citep{heninger2012mining}. Sus resultados mostraron que era posible factorizar un número significativo de estas claves, lo que confirmó que el problema no era anecdótico y que existían implementaciones reales vulnerables debido a deficiencias en la generación de claves.
-
+\\
+\\
 A partir de ahí, otros trabajos ampliaron tanto el volumen analizado como el número de claves factorizadas. Hastings et al. analizaron 81 millones de claves y factorizaron más de 313.000 \citep{hastings2016weak}, mientras que Kilgallin y Vasko analizaron unos 57 millones de claves procedentes de escaneos de Internet y lograron factorizar 249.548 \citep{kilgallin2019factoring}, tal y como resume también la tesis de Våge \citep{vage2022finding}.
-
+\\
+\\
 Estos resultados muestran que la búsqueda de factores compartidos dejó de ser rápidamente un problema puramente académico para convertirse en una herramienta útil de auditoría sobre infraestructuras reales. Además, la literatura comenzó a señalar que el auge del Internet de las Cosas podía estar relacionado con la persistencia de este tipo de vulnerabilidades, ya que muchos de estos dispositivos son ligeros, disponen de pocos recursos y pueden contar con fuentes de entropía pobres. Esto hace que el problema sea especialmente relevante en un contexto con un número creciente de dispositivos conectados.
-
+\\
+\\
 Por otro lado, el origen de las claves analizadas también resultó ser un aspecto importante. Våge destaca una diferencia relevante entre las claves obtenidas mediante escaneos de Internet y las procedentes de certificados publicados en \textit{Certificate Transparency logs}. Mientras que los escaneos pueden devolver certificados autofirmados, de prueba o de uso interno, las claves presentes en \textit{CT logs} están asociadas a certificados firmados por autoridades certificadoras reconocidas por los principales navegadores. Esto hace que los \textit{CT logs} resulten especialmente interesantes cuando el objetivo es estudiar la criptografía desplegada en el ecosistema web público.
-
+\\
+\\
 La tesis que sirve de base a este TFM se sitúa precisamente en esta línea. Frente a trabajos anteriores más centrados en escaneos de Internet, Våge recopiló 159.377.664 claves RSA distintas de 2048 bits extraídas de \textit{CT logs}, el mayor conjunto de este tipo utilizado hasta ese momento. En la ejecución general del algoritmo se encontraron ocho claves vulnerables, todas ellas emitidas por ZeroSSL, y un análisis posterior centrado en esta autoridad certificadora permitió factorizar 355 claves únicas dentro de un conjunto de más de 700.000 \citep{vage2022finding}.
-
+\\
+\\
 La conclusión de la tesis resulta especialmente relevante para nuestro trabajo: tanto ese estudio como el de \citet{kilgallin2019factoring} apenas habían analizado una pequeña fracción del volumen total de certificados subidos a los \textit{CT logs} desde 2013. Esto pone de manifiesto que el problema seguía lejos de estar agotado y que todavía existía margen para investigaciones más grandes y exhaustivas. Precisamente en ese punto cobra importancia la necesidad de contar con algoritmos cada vez más eficientes para detectar factores compartidos a gran escala.
 
 \section{Enfoque clásico basado en product tree y remainder tree}
 
 Para que este tipo de análisis masivo sea viable, la literatura tuvo que ir más allá de la comparación entre todos los pares posibles de módulos RSA. Como ya se ha comentado, una estrategia basada en calcular el GCD de cada par crece de forma cuadrática y se vuelve poco realista cuando el número de claves es muy grande. Por ello, se desarrollaron algoritmos específicos capaces de explotar la estructura del conjunto completo de módulos para reducir de forma importante el coste del análisis.
-
+\\
+\\
 Dentro de estos enfoques, el método clásico que ha acabado consolidándose es el basado en la construcción de un \textit{product tree} seguido de un \textit{remainder tree}. Este método constituye la referencia principal frente a la que se comparan las propuestas más recientes \citep{vage2022finding,pelofske2024efficient}.
-
+\\
+\\
 La idea general de este enfoque consiste en multiplicar de forma jerárquica todos los módulos RSA del conjunto para construir un árbol de productos. Después, a partir de esa estructura, se calcula un árbol de residuos que permite determinar, en las hojas, si un módulo comparte algún factor con el producto del resto \citep{pelofske2024efficient}. De esta forma, no es necesario comparar cada clave con todas las demás de manera independiente, sino que el problema se reorganiza mediante operaciones sobre árboles que aprovechan mejor la estructura global del conjunto.
-
+\\
+\\
 La tesis de Våge explica además cómo este método puede adaptarse a ejecuciones de gran escala dividiendo la colección completa de módulos en varios lotes o \textit{batches} \citep{vage2022finding}. Para cada lote se construye su correspondiente \textit{product tree} y \textit{remainder tree}, y posteriormente se cruzan los distintos bloques para detectar factores compartidos entre lotes diferentes. Este planteamiento permite controlar mejor el tamaño de los enteros intermedios y hacer viable el análisis de conjuntos mucho mayores de los que podría manejar una ejecución monolítica en memoria.
-
+\\
+\\
 Por tanto, el enfoque clásico basado en \textit{product tree} y \textit{remainder tree} supuso un avance importante dentro del estado del arte, ya que permitió pasar de estrategias conceptualmente simples pero inasumibles a procedimientos realmente utilizables para auditar grandes colecciones de claves públicas RSA. Los estudios empíricos comentados en el apartado anterior se basan en esta técnica; sin esta familia de métodos, gran parte de esos análisis no habría sido posible.
-
+\\
+\\
 Aunque este método supuso un gran avance respecto a la comparación ingenua de todos los pares, la propia literatura ha puesto de manifiesto que su aplicación práctica a gran escala sigue presentando dificultades importantes. De hecho, que este enfoque haya sido el dominante durante años no significa que esté exento de limitaciones. Cuando se pretende seguir aumentando el tamaño de los conjuntos analizados, empiezan a aparecer dificultades prácticas relacionadas con el tiempo de ejecución, el consumo de memoria y la gestión de enteros de gran tamaño. Estas limitaciones no invalidan el método, pero sí explican por qué resulta razonable seguir buscando alternativas más eficientes.
-
+\\
+\\
 Una de las principales dificultades aparece en la parte alta de los árboles, donde los enteros intermedios alcanzan tamaños enormes. La tesis de Våge señala que el cuello de botella del algoritmo se encuentra precisamente en estas etapas, ya que el coste computacional crece a medida que se opera con números cada vez mayores. Esto no solo afecta al tiempo de ejecución, sino también a la cantidad de memoria necesaria para mantener la estructura del cálculo.
-
+\\
+\\
 Además, cuando el análisis se lleva a conjuntos realmente grandes, entran en juego problemas más prácticos de ingeniería asociados al coste computacional. En la ejecución descrita en la tesis, el experimento principal tuvo que dividirse en 13 lotes de alrededor de 12 millones de claves cada uno, y el proceso completo requirió del orden de 180 GB de memoria RAM, aproximadamente 1 TB de almacenamiento en disco y unas 88 horas de ejecución utilizando 30 núcleos \citep{vage2022finding}. Estas cifras dejan claro que, aunque el método clásico funciona, escalarlo no resulta trivial y exige recursos considerables.
-
+\\
+\\
 Esta tesis también menciona otras complicaciones asociadas a este tipo de ejecuciones, como la necesidad de almacenar los datos de forma sistemática o los problemas derivados de trabajar con enteros muy grandes en bibliotecas de aritmética multiprecisión. Todo ello refuerza la idea de que, cuando el objetivo es seguir ampliando el análisis sobre volúmenes masivos de certificados, el algoritmo utilizado pasa a ser un factor decisivo.
-
+\\
+\\
 En la propia conclusión del trabajo, Våge señala que una mejora del algoritmo \textit{batch GCD} permitiría investigaciones más grandes y más completas sobre el estado de la criptografía en la práctica. Esta observación resulta especialmente importante, porque enlaza de forma directa con la propuesta de Pelofske y con la motivación de este TFM. Por ello, las limitaciones del método clásico no deben entenderse como un fracaso del enfoque, sino como la consecuencia natural de intentar escalar el análisis a conjuntos cada vez mayores. Precisamente por eso, el siguiente paso dentro del estado del arte consiste en estudiar propuestas que mantengan la utilidad del \textit{batch GCD}, pero reduzcan parte del coste computacional asociado al método tradicional.
 
 \section{Binary Tree Batch GCD como propuesta reciente}
 
 En este contexto se propone una alternativa al enfoque clásico denominada \textit{Binary Tree Batch GCD} \citep{pelofske2024efficient}. Su punto de partida es el mismo problema descrito anteriormente: cómo realizar un ataque \textit{all-to-all GCD} sobre grandes conjuntos de módulos RSA para detectar factores compartidos debidos a baja entropía o a fallos de implementación.
-
+\\
+\\
 Desde la perspectiva del estado del arte, lo más relevante de esta propuesta es que busca reducir parte del coste práctico asociado al método tradicional basado en \textit{product tree} y \textit{remainder tree}. El nuevo enfoque evita construir explícitamente el \textit{remainder tree} y mantiene una complejidad asintótica muy similar a la del método clásico.
-
+\\
+\\
 Además, en los experimentos presentados por Pelofske, el algoritmo obtiene mejores tiempos de ejecución que el enfoque tradicional, con una mejora práctica media aproximada de seis veces \citep{pelofske2024efficient}. Esto resulta especialmente interesante en un contexto como el nuestro, donde el problema no es solo detectar factores compartidos, sino hacerlo sobre conjuntos de datos cada vez mayores.
-
+\\
+\\
 Por tanto, dentro de la literatura reciente, el \textit{Binary Tree Batch GCD} puede interpretarse como una evolución natural del enfoque clásico. No cambia el problema que se quiere resolver, pero sí propone una forma distinta de abordarlo, con el objetivo de mejorar el rendimiento práctico y facilitar análisis de mayor escala sobre claves RSA potencialmente vulnerables.
 
 \section{Encaje y motivación del presente trabajo}
 
 A la vista de lo revisado en este capítulo, podemos situar la aportación de este Trabajo de Fin de Máster dentro del estado del arte actual.
-
+\\
+\\
 Por un lado, la tesis de \citet{vage2022finding} demostró que los \textit{Certificate Transparency logs} constituyen una fuente valiosa para estudiar factores compartidos en claves RSA reales y que este tipo de análisis sigue ofreciendo resultados relevantes en la práctica. Además, dejó abierta una idea especialmente importante para nuestro trabajo: si el algoritmo \textit{batch GCD} pudiera mejorarse, sería posible llevar a cabo investigaciones más grandes y más completas sobre el estado real de la criptografía desplegada en Internet.
-
+\\
+\\
 Por otro lado, el artículo de \citet{pelofske2024efficient} propone precisamente una mejora algorítmica orientada a ese mismo problema, mostrando que el \textit{Binary Tree Batch GCD} puede ofrecer una ventaja práctica significativa frente al método clásico basado en \textit{remainder tree}. Esto hace que ambas referencias encajen de forma especialmente natural entre sí: la tesis aporta el contexto aplicado, la fuente de datos y la motivación experimental, mientras que el artículo aporta la propuesta algorítmica más reciente.
-
+\\
+\\
 Nuestro TFM se sitúa precisamente en la intersección entre ambos trabajos. Partiremos del problema y del contexto experimental planteados en la tesis, centrados en el análisis de claves RSA extraídas de \textit{CT logs}, pero sustituiremos el núcleo algorítmico empleado en dicho trabajo por la propuesta de Pelofske. Con ello, buscaremos comprobar si esta alternativa constituye una mejora real en términos prácticos y si puede servir como base para futuras auditorías sobre conjuntos aún mayores de certificados.
-
+\\
+\\
 De este modo, la aportación de este trabajo no consistirá en replantear el problema desde cero, sino en continuar una línea de investigación ya abierta, incorporando una herramienta más reciente y potencialmente más eficiente. Este posicionamiento resulta, a nuestro juicio, especialmente adecuado para un Trabajo de Fin de Máster, ya que combina revisión crítica de trabajos previos, implementación experimental y análisis aplicado sobre un problema real de ciberseguridad.
-
+\\
+\\
 Una vez establecido este marco, en el capítulo siguiente nos centraremos ya en la parte metodológica del trabajo. En particular, describiremos con más detalle el fundamento del \textit{batch GCD}, el algoritmo \textit{Binary Tree Batch GCD} y las decisiones de implementación adoptadas para llevar a cabo nuestros experimentos.

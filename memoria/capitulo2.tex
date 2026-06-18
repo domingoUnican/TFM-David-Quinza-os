@@ -1,15 +1,18 @@
 \chapter{Fundamentos teóricos}
 \label{chap-The}
 En este capítulo presentaremos los conceptos teóricos necesarios para comprender el problema abordado en este Trabajo de Fin de Máster. Dado que nuestro objetivo es estudiar la detección de factores compartidos en claves RSA extraídas de \textit{Certificate Transparency logs}, consideramos que los cuatro elementos fundamentales que es necesario introducir previamente son: el funcionamiento general de RSA, el papel del máximo común divisor en este contexto, la definición de la entropía respecto a la generación de claves y, por último, los fundamentos técnicos relativos a \textit{CT logs} como fuente de datos para este tipo de análisis.
-
+\\
+\\
 No se pretende realizar aquí una exposición exhaustiva de toda la teoría criptográfica relacionada con el funcionamiento de certificados en la Web, sino presentar únicamente aquellos conceptos que resultarán necesarios para entender el desarrollo posterior del trabajo. De este modo, en los capítulos siguientes nos centraremos en las propuestas realizadas, en la metodología empleada para el desarrollo del trabajo y en los detalles técnicos de la implementación del algoritmo utilizado.
 
 \section{Fundamentos de RSA}
 
 RSA es uno de los algoritmos más conocidos de criptografía asimétrica y uno de los más influyentes en la historia de la seguridad informática~\citep{rivest1978method}.
-
+\\
+\\
 Como se ha introducido en el capítulo anterior, a diferencia de la criptografía simétrica, donde emisor y receptor comparten la misma clave secreta, en criptografía asimétrica cada usuario dispone de un par de claves relacionadas matemáticamente: una clave pública $p_k$ y una clave privada $s_k$.
-
+\\
+\\
 Cualquier esquema de criptografía asimétrica tiene que definir tres algoritmos:
 
 \begin{itemize}
@@ -19,17 +22,23 @@ Cualquier esquema de criptografía asimétrica tiene que definir tres algoritmos
 \end{itemize}
 
 Siempre que el esquema cumpla las condiciones de corrección, es posible enviar mensajes confidenciales a un usuario utilizando su clave pública $p_k$, de forma que solo la clave privada correspondiente $s_k$ permita recuperar el mensaje original.
-
+\\
+\\
 Este modelo permitió abordar uno de los grandes problemas de la criptografía simétrica tradicional: la necesidad de compartir previamente una clave secreta por un canal seguro. Gracias a la criptografía de clave pública, es posible establecer comunicaciones seguras, autenticar identidades y verificar firmas digitales en entornos abiertos como Internet, donde las partes no siempre han intercambiado un secreto con anterioridad.
-
+\\
+\\
 Esta misma separación entre clave pública y clave privada también permite construir esquemas de firma electrónica. En este caso, la idea no es ocultar el contenido del mensaje, sino demostrar su origen y garantizar que no ha sido modificado.
-
+\\
+\\
 De forma simplificada, el firmante utiliza su clave privada para generar una firma asociada al mensaje, y cualquier verificador puede comprobar esa firma utilizando la clave pública correspondiente. Así, si la verificación es correcta, se obtiene una garantía criptográfica de que la firma ha sido generada con la clave privada asociada a esa clave pública, sin necesidad de revelar dicha clave. En la práctica, los esquemas de firma no se aplican normalmente sobre el mensaje completo, sino sobre un resumen criptográfico del mismo, pero esta descripción simplificada permite entender el papel que desempeña RSA en autenticación y firma digital. Para más detalles, nos remitimos a \cite{menezes1996handbook}.
-
+\\
+\\
 Para garantizar la seguridad de este tipo de sistemas, es especialmente importante que no se pueda deducir información útil de $s_k$ conociendo únicamente $p_k$. En los criptosistemas de clave pública, esta propiedad se apoya normalmente en la dificultad computacional de resolver ciertos problemas matemáticos: aunque las operaciones necesarias para generar las claves, cifrar o verificar sean eficientes, el problema inverso debe resultar inviable para un adversario con recursos de cómputo realistas.
-
+\\
+\\
 Esta dificultad se controla mediante el parámetro de seguridad $\lambda$, que en la práctica suele relacionarse con el tamaño de las claves expresado en bits. En RSA, este parámetro se identifica habitualmente con la longitud en bits del módulo público $N$. Sin embargo, una clave RSA de 2048 bits no proporciona 2048 bits de seguridad efectiva, sino un nivel de seguridad equivalente al coste de los mejores ataques conocidos de factorización. Por ello, las recomendaciones criptográficas distinguen entre longitud de clave y nivel de seguridad equivalente, o \textit{security strength}, expresado también en bits \citep{nist80057pt1r5}.
-
+\\
+\\
 En el caso de RSA, la seguridad del sistema se basa en la dificultad de factorizar un número entero grande obtenido como producto de dos números primos también grandes. Si denotamos estos primos por \(p\) y \(q\), el módulo RSA se construye como
 
 \[
@@ -101,13 +110,15 @@ En la Figura~\ref{fig:generacion_clave_rsa} describimos los pasos simplificados 
 \end{figure}
 
 Las principales ventajas de RSA se apoyan, por tanto, en que multiplicar dos primos grandes es sencillo y eficiente, mientras que recuperar esos primos a partir únicamente de \(N\) es un problema computacionalmente muy costoso en condiciones normales para un adversario que utilice computación clásica. Esta dificultad práctica ha sido estudiada durante décadas mediante técnicas cada vez más avanzadas de factorización entera, como ilustra el \textit{RSA Factoring Challenge}, propuesto por RSA Laboratories para incentivar la investigación sobre la factorización de grandes enteros semiprimos \citep{rivest1978method,rsaChallenge}. Por este motivo, RSA ha sido durante muchos años uno de los algoritmos más utilizados en certificados digitales y en infraestructuras de clave pública dentro de la Web.
-
+\\
+\\
 Sin embargo, esta seguridad práctica no depende únicamente de la dificultad general del problema de factorización, sino que es importante que la implementación del sistema criptográfico se realice correctamente. Por ello, también depende de que los primos \(p\) y \(q\) se hayan generado correctamente, cumplan con la longitud recomendada de clave y, sobre todo, sean independientes de los utilizados por otras claves. Esta última idea será especialmente importante en este trabajo, ya que la presencia de factores compartidos entre módulos RSA supone una debilidad crítica que permite comprometer la seguridad del sistema sin necesidad de resolver el problema general de factorización.
 
 \section{Máximo común divisor y su relación con RSA}
 
 El máximo común divisor, o \textit{Greatest Common Divisor} (GCD), de dos enteros es el mayor número que divide exactamente a ambos. Aunque se trata de un concepto básico de teoría de números, en el contexto de RSA adquiere una importancia especial: permite comprobar de forma eficiente si dos módulos tienen algún divisor común no trivial. Esta propiedad conecta directamente la generación incorrecta de claves con la posibilidad de factorizar módulos vulnerables.
-
+\\
+\\
 Si consideramos dos módulos RSA distintos
 
 \[
@@ -160,7 +171,8 @@ para recuperar directamente ese factor común. Una vez conocido, hallar \(q_1\) 
 \end{figure}
 
 El interés del GCD en este trabajo no está solo en esta propiedad, sino también en que puede calcularse de forma muy eficiente mediante el algoritmo de Euclides. Este algoritmo se basa en una idea sencilla: el máximo común divisor de dos números no cambia si sustituimos el mayor por el resto de dividirlo entre el menor. Repitiendo este proceso de manera sucesiva se llega rápidamente a un resto cero, y el último resto no nulo es precisamente el máximo común divisor.
-
+\\
+\\
 De forma simplificada, si \(a>b\), el algoritmo aplica la relación
 
 \[
@@ -168,17 +180,21 @@ De forma simplificada, si \(a>b\), el algoritmo aplica la relación
 \]
 
 hasta alcanzar el caso final en el que el resto es cero. La eficiencia de este procedimiento es una de las razones por las que los ataques basados en GCD son tan potentes cuando existen factores compartidos entre claves RSA.
-
+\\
+\\
 En el contexto de este trabajo, el máximo común divisor desempeña un papel central. Por un lado, constituye la herramienta matemática que permite explotar la debilidad cuando existen factores compartidos entre módulos RSA. Por otro, se convierte en la operación central de los algoritmos diseñados para detectar este problema a gran escala.
 
 \section{Entropía y generación de claves RSA}
 
 Aunque RSA es un esquema sólido desde el punto de vista matemático, su seguridad práctica depende de que la generación de claves se realice correctamente. En particular, para construir una clave RSA segura es necesario que los números primos \(p\) y \(q\) se generen de manera suficientemente aleatoria e independiente. Si esta condición no se cumple, pueden aparecer relaciones inesperadas entre distintas claves públicas, incluyendo la reutilización accidental de factores primos \citep{heninger2012mining,vage2022finding,pelofske2024efficient}.
-
+\\
+\\
 En este contexto, la entropía hace referencia al grado de imprevisibilidad disponible en el sistema para alimentar el proceso de generación aleatoria. En un entorno bien diseñado, esa entropía permite producir candidatos a primos que sean efectivamente impredecibles. Sin embargo, en sistemas reales esto no siempre ocurre. Una baja entropía durante la generación de primos puede hacer que distintas claves RSA compartan factores, lo que compromete completamente su seguridad.
-
+\\
+\\
 Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso incorrecto de librerías de generación aleatoria, errores de implementación o la falta de una fuente externa suficiente de entropía en el momento de generar la clave. En la práctica, la búsqueda de primos se apoya en algoritmos deterministas inicializados a partir de una semilla aleatoria; si esa semilla se repite o es predecible, distintos procesos pueden recorrer candidatos iguales o correlacionados y terminar generando primos repetidos. Existen recomendaciones específicas para evaluar las fuentes de entropía, como NIST Special Publication 800-90B \citep{NST800-90B}. Este problema resulta especialmente preocupante en dispositivos con recursos limitados, sistemas embebidos o equipos que generan claves en condiciones poco favorables, por ejemplo justo después del arranque, cuando el sistema aún puede no haber acumulado suficiente información impredecible procedente de eventos externos.
-
+\\
+\\
 La Figura~\ref{fig:baja_entropia} resume esta cadena causal, desde una fuente de entropía insuficiente o un generador defectuoso hasta la aparición de módulos RSA vulnerables que pueden factorizarse mediante el cálculo del GCD.
 
 \begin{figure}[H]
@@ -211,18 +227,21 @@ La Figura~\ref{fig:baja_entropia} resume esta cadena causal, desde una fuente de
 \end{figure}
 
 La tesis en la que se apoya este trabajo subraya que, en condiciones ideales, la probabilidad de que dos claves RSA distintas reutilicen un mismo primo dentro del enorme espacio de posibles primos de tamaño criptográfico es prácticamente nula \citep{vage2022finding}. Por eso, cuando en la práctica aparecen factores compartidos entre módulos públicos, no estamos ante una simple casualidad matemática, sino ante una señal muy clara de que ha existido un fallo en el proceso de generación.
-
+\\
+\\
 Además, este problema no es meramente teórico. Trabajos previos ya mostraron que la baja entropía y otros errores de implementación podían dar lugar a claves públicas vulnerables en sistemas reales, incluyendo dispositivos conectados a Internet \citep{heninger2012mining}. Esta línea de investigación se ha aplicado a certificados publicados en \textit{CT logs} y también ha motivado algoritmos más eficientes para analizar estas situaciones a gran escala \citep{vage2022finding,pelofske2024efficient}.
-
+\\
+\\
 Por tanto, la entropía es importante en este trabajo porque ayuda a explicar el origen de la vulnerabilidad que se quiere estudiar. En la práctica no es sencillo comprobar equipo por equipo si las claves se han generado en buenas condiciones, especialmente cuando intervienen muchos certificados y dispositivos conectados a Internet. Por eso, una forma razonable de estudiar el problema es analizar grandes conjuntos de claves públicas ya emitidas y buscar en ellas factores compartidos. Si la generación de claves no se realiza siempre en condiciones ideales, entonces la auditoría empírica de la infraestructura criptográfica desplegada en Internet se convierte en una tarea especialmente relevante desde el punto de vista de la ciberseguridad.
-
 
 \section{Certificate Transparency logs}
 
 Para poder estudiar este problema en sistemas reales es necesario contar con una fuente de claves públicas que contenga un volumen de datos suficiente y que sea accesible. En este trabajo esa fuente serán los \textit{Certificate Transparency logs}, o \textit{CT logs}, que almacenan certificados digitales emitidos para dominios y servicios de Internet.
-
+\\
+\\
 Antes de explicar su utilidad, conviene recordar brevemente qué papel desempeñan las claves y los certificados digitales en la Web. Cada servidor conserva una clave privada que debe mantenerse secreta e idealmente no debe abandonar el sistema. La clave pública correspondiente a esa clave privada es necesaria para que otras partes puedan verificar operaciones criptográficas asociadas, por ejemplo mediante mecanismos de firma digital. Un certificado digital, normalmente en formato X.509, vincula esa clave pública con una identidad o dominio. Una autoridad certificadora comprueba dicha vinculación y firma el certificado con su propia clave privada; el cliente puede verificar la firma mediante la clave pública de la autoridad, directamente o a través de una cadena de confianza.
-
+\\
+\\
 El formato X.509 funciona como estándar de facto para el manejo de certificados en infraestructuras de clave pública. Fue propuesto inicialmente como parte de la serie X.500 de la Unión Internacional de Telecomunicaciones (ITU, por sus siglas en inglés) para la interconexión de sistemas abiertos \citep{ITU1988X500}. De forma simplificada, un certificado X.509 contiene información estructurada como la versión, el número de serie, el identificador del algoritmo de firma, el emisor, el periodo de validez, el sujeto o titular del certificado, la información de clave pública del sujeto y la firma digital del certificado.
 
 \begin{figure}[htbp]
@@ -268,7 +287,9 @@ El formato X.509 funciona como estándar de facto para el manejo de certificados
 \end{figure}
 
 En la práctica, este mecanismo es uno de los pilares de TLS, el protocolo utilizado para proteger HTTPS, introducido en el Capítulo~1. Como resume la Figura~\ref{fig:conexion_tls}, el cliente inicia la negociación, el servidor presenta su certificado y demuestra que posee la clave privada asociada, y ambas partes establecen claves de sesión para proteger el tráfico posterior \citep{rfc8446}. La clave privada del servidor no se transmite; lo que se publica mediante el certificado es su clave pública. Los certificados digitales hacen así posible la autenticación del servidor y, al mismo tiempo, exponen claves públicas. Estas claves pueden analizarse con fines de auditoría criptográfica.
-
+\\
+\\
 En este contexto surge \textit{Certificate Transparency}, un marco diseñado para aportar mayor transparencia al ecosistema de certificación web. Su idea principal es que los certificados emitidos por las autoridades certificadoras queden registrados en logs públicos, verificables y de solo anexado, de manera que su emisión pueda ser observada y supervisada por terceros \citep{rfc9162}. Esto dificulta que una autoridad certificadora emita certificados incorrectos o fraudulentos sin que nadie pueda detectarlo.
-
+\\
+\\
 Esto conecta de forma directa con la línea seguida en este TFM. Gracias a los \textit{CT logs}, es posible pasar de un análisis puramente teórico sobre debilidades de RSA a una auditoría empírica sobre claves públicas realmente desplegadas en Internet. Como veremos en el capítulo siguiente, esta posibilidad ha dado lugar a trabajos previos relevantes y justifica la necesidad de seguir buscando métodos más eficientes para detectar factores compartidos a gran escala.

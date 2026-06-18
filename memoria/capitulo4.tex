@@ -41,14 +41,15 @@ Si el conjunto contiene \(M\) módulos RSA, una estrategia de fuerza bruta exigi
 comparaciones distintas, ya que habría que estudiar todos los pares posibles. Aunque cada cálculo individual de \textit{gcd} sea barato, el número total de operaciones crece de forma cuadrática con el tamaño del conjunto, lo que convierte este enfoque en una opción poco realista cuando trabajamos con miles, millones o incluso cientos de millones de claves. El artículo de Pelofske insiste precisamente en esta idea al presentar el problema como un ataque \textit{all-to-all GCD} \citep{pelofske2024efficient}.
 \\
 \\
-A partir de esta limitación surge la necesidad de diseñar métodos que permitan detectar factores compartidos sin tener que comparar cada módulo con todos los demás de forma aislada. Esa es la idea que da lugar a los algoritmos \textit{batch GCD}. En términos generales, estos métodos no cambian el objetivo final del ataque, que sigue siendo identificar divisores comunes no triviales dentro de un conjunto de módulos RSA, pero sí modifican la forma de organizar el cálculo para aprovechar la estructura global del conjunto y reducir de manera importante el coste práctico.
+A partir de esta limitación surge la necesidad de diseñar métodos que detecten factores compartidos sin comparar cada módulo con todos los demás. Esa es la idea de los algoritmos \textit{batch GCD}: reorganizar el cálculo para aprovechar productos agregados del conjunto y reducir el coste práctico.
 \\
 \\
-Dentro de esta familia de enfoques, el método clásico descrito en la tesis de Våge parte de la construcción de un \textit{product tree} y un \textit{remainder tree}. La idea básica es agrupar los módulos del conjunto de manera jerárquica, multiplicándolos para formar productos intermedios cada vez mayores. Después, mediante el árbol de residuos, se comprueba en las hojas si un determinado módulo comparte algún factor con el producto del resto. De esta forma, el análisis deja de estar planteado como una colección de comparaciones independientes y pasa a organizarse alrededor de operaciones sobre árboles, lo que permite escalar mucho mejor que la enumeración exhaustiva de todos los pares.
+Dentro de esta familia, el método clásico descrito en la tesis de Våge parte de un \textit{product tree} y un \textit{remainder tree}. Primero agrupa los módulos de forma jerárquica y forma productos intermedios; después usa el árbol de residuos para comprobar en las hojas si un módulo comparte algún factor con el producto del resto. Así, el análisis deja de ser una colección de comparaciones independientes y pasa a organizarse mediante operaciones sobre árboles.
 
 \begin{figure}[H]
     \centering
-    \resizebox{0.78\textwidth}{!}{%
+    \captionsetup{font=small,skip=2pt}
+    \resizebox{0.48\textwidth}{!}{%
     \begin{tikzpicture}[
         node distance=0.9cm and 0.9cm,
         product/.style={rectangle, draw=blue!55!black, fill=blue!8,
@@ -101,7 +102,7 @@ Dentro de esta familia de enfoques, el método clásico descrito en la tesis de 
             left=0.55cm of r12] {Árbol de residuos};
     \end{tikzpicture}%
     }
-    \caption{Esquema simplificado del método clásico basado en un árbol de productos y un árbol de residuos. Los nodos azules representan productos de módulos RSA, los nodos rojos representan residuos propagados por el árbol y los nodos verdes muestran los cálculos finales de máximo común divisor en las hojas.}
+    \caption{Esquema del método clásico. Azul: productos RSA; rojo: residuos; verde: GCD finales.}
     \label{fig:batch_gcd_clasico}
 \end{figure}
 

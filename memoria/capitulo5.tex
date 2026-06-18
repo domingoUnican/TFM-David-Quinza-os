@@ -91,7 +91,7 @@ El número de módulos vulnerables detectados no tiene por qué coincidir exacta
 
 La Figura~\ref{fig:tiempo_pelofske_extendida} muestra los tiempos de ejecución de los tres algoritmos. Como en el experimento de Pelofske, las filas distinguen el tamaño del módulo RSA y las columnas representan los valores de \(\texttt{WEAK}\). La escala vertical es logarítmica para apreciar mejor las diferencias entre la implementación C++ y las versiones Python.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{\figpath{comparativa_tiempo_pelofske_extendida.pdf}}
     \caption{Comparación del tiempo de ejecución de los tres algoritmos evaluados sobre datos sintéticos: \textit{Remainder Tree Batch GCD} en Python, \textit{Binary Tree Batch GCD} en Python y \textit{Binary Tree Batch GCD} en C++/GMP.}
@@ -147,7 +147,7 @@ Los resultados son coherentes con la motivación de Pelofske. El algoritmo \text
 
 Además del tiempo de ejecución, también se midió el pico de memoria RAM consumida por cada algoritmo. La Figura~\ref{fig:memoria_pelofske_extendida} muestra los resultados obtenidos.
 
-\begin{figure}[htbp]
+\begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{\figpath{comparativa_memoria_pelofske_extendida.pdf}}
     \caption{Comparación del consumo pico de memoria de los tres algoritmos evaluados: en verde Binary Tree (C++/GMP), en azul Binary Tree (Python) y en rojo la implementación clásica en Python.}

@@ -16,7 +16,7 @@ La criptografía moderna combina estas primitivas asimétricas con algoritmos si
 \\
 Según \cite{aumasson2024serious}, un certificado es una clave pública acompañada de una firma sobre ella, además de otra información asociada. Como veremos, estos certificados en Internet permiten un uso de la Web seguro y confiable. Por ejemplo, para que un navegador web pueda confiar en una clave pública, es necesario que pueda verificar que esta pertenece a la entidad con la que se quiere comunicar (por ejemplo www.unican.es). En este caso es necesaria una firma electrónica que permita verificar la vinculación con el dominio, siendo este el papel de la entidad de certificación o «certificate authority» (CA). En el caso de la Universidad de Cantabria, la entidad certificadora puede consultarse desde el propio navegador web (ver Figura~\ref{fig:ejemplo_certificado}), ya que los navegadores incluyen de serie los certificados raíz de las autoridades reconocidas.
 
-\begin{figure}[htbp]
+\begin{figure}[h]
 \centering
 \includegraphics[scale=0.51]{\figpath{Ejemplo certificado.png}}
 \caption{Ejemplo de entidad de certificación que acredita la autenticidad del dominio unican.es}
@@ -25,7 +25,7 @@ Según \cite{aumasson2024serious}, un certificado es una clave pública acompañ
 
 El esquema de la evolución de los sistemas criptográficos de la Figura~\ref{fig:evolucion_criptografia} no representa una sustitución completa de unas técnicas por otras, sino una ampliación progresiva de las herramientas disponibles. La aparición de la criptografía de clave pública permitió abordar problemas de distribución de claves y autenticación que limitaban a los sistemas anteriores, y preparó el terreno para el uso de RSA, TLS y los certificados electrónicos en la Web.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \begin{tikzpicture}[
         x=2.7cm,
@@ -62,7 +62,7 @@ El esquema de la evolución de los sistemas criptográficos de la Figura~\ref{fi
 
 Por otro lado, queremos introducir brevemente el protocolo de comunicación \textit{Transport Layer Security} (TLS), que garantiza la confidencialidad de la comunicación extremo a extremo entre dos equipos conectados a través de Internet. En este protocolo se intercambian mensajes entre el cliente y el servidor para acordar una clave segura. En un primer mensaje el cliente envía un mensaje para establecer la conexión, con los métodos de cifrado disponibles y su clave pública generada para esa sesión. En un segundo mensaje, el servidor responde con un mensaje en el que se envía, entre otra información, el método de cifrado elegido, una clave pública propia y un certificado, junto a la información intercambiada firmada. Tras verificar toda la información recibida, el cliente podrá iniciar la comunicación cifrada. Un resumen del esquema de intercambio de mensajes se muestra en la Figura \ref{fig:TLS13}.
 
-\begin{figure}[H]
+\begin{figure}[h]
 \centering
 \includegraphics[scale=0.41]{\figpath{Handshake_TLS_of_two_version.png}}
 \caption{Esquema del intercambio (TLS 1.3). Fuente Halub3, CC BY-SA 4.0, via Wikimedia Commons}
@@ -93,7 +93,7 @@ El trabajo combinará así revisión teórica, reproducción experimental, desar
 \\
 La combinación de experimentos sintéticos y certificados reales responde a dos necesidades complementarias. Los primeros permiten comprobar el comportamiento del algoritmo en condiciones controladas y comparar las distintas implementaciones sobre entradas equivalentes; los segundos permiten valorar su utilidad sobre claves públicas procedentes de un entorno efectivamente desplegado. El alcance del trabajo une así validación experimental y aplicación práctica, sin pretender extrapolar los resultados más allá del conjunto de certificados finalmente analizado. Hemos incluido un esquema con el flujo seguido para el análisis de los CT logs en la Figura \ref{fig:vision_global_tfm}.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \begin{tikzpicture}[
         node distance=0.42cm,

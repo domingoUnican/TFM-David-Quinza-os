@@ -49,17 +49,17 @@ Dentro de esta familia, el método clásico descrito en la tesis de Våge parte 
 \begin{figure}[H]
     \centering
     \captionsetup{font=small,skip=2pt}
-    \resizebox{0.48\textwidth}{!}{%
+    \resizebox{0.78\textwidth}{!}{%
     \begin{tikzpicture}[
-        node distance=0.9cm and 0.9cm,
+        node distance=0.55cm and 0.7cm,
         product/.style={rectangle, draw=blue!55!black, fill=blue!8,
-            thick, minimum width=2.1cm, minimum height=0.8cm,
+            thick, minimum width=2.1cm, minimum height=0.65cm,
             align=center},
         remainder/.style={rectangle, draw=red!65!black, fill=red!8,
-            thick, minimum width=2.7cm, minimum height=0.8cm,
+            thick, minimum width=2.7cm, minimum height=0.65cm,
             align=center},
         result/.style={rectangle, draw=green!45!black, fill=green!8,
-            thick, minimum width=2.35cm, minimum height=0.8cm,
+            thick, minimum width=2.35cm, minimum height=0.65cm,
             align=center},
         flow/.style={-{Latex[length=2.2mm]}, thick}
     ]
@@ -72,9 +72,9 @@ Dentro de esta familia, el método clásico descrito en la tesis de Våge parte 
         \node[product, below=of $(n3)!0.5!(n4)$] (p34) {\(P_{34}=N_3N_4\)};
         \node[product, below=of $(p12)!0.5!(p34)$] (p) {\(P=P_{12}P_{34}\)};
 
-        \node[remainder, below left=1.0cm and 0.25cm of p]
+        \node[remainder, below left=0.65cm and 0.25cm of p]
             (r12) {\(R_{12}=P\bmod P_{12}^{\,2}\)};
-        \node[remainder, below right=1.0cm and 0.25cm of p]
+        \node[remainder, below right=0.65cm and 0.25cm of p]
             (r34) {\(R_{34}=P\bmod P_{34}^{\,2}\)};
         \node[result, below=of r12] (g12)
             {\(\gcd\!\left(N_1,\,R_1/N_1\right)\),
@@ -276,15 +276,16 @@ La segunda fase consiste en la agregación de todos los divisores comunes no tri
 La tercera fase corresponde a la enumeración final sobre el conjunto original de módulos. Para cada \(N_i\), se calcula \(\gcd(N_i,B)\) y se comprueba si el resultado es no trivial. Esta fase es especialmente adecuada para una posible paralelización, ya que cada comprobación puede realizarse de forma independiente sobre módulos distintos. Por esta razón, la implementación incluye soporte opcional para OpenMP, aunque el diseño del algoritmo no depende de dicha paralelización.
 \\
 \\
-La Figura~\ref{fig:modulos_implementacion} resume los módulos funcionales de la implementación y el recorrido de los datos. La separación entre preparación, núcleo algorítmico y resultados permite utilizar la misma implementación tanto con conjuntos sintéticos como con módulos extraídos de certificados reales.
+La Figura~\ref{fig:modulos_implementacion} resume el flujo de la implementación, desde las fuentes de entrada hasta la salida de factores, tiempos y memoria. Esta separación permite utilizar la misma implementación tanto con conjuntos sintéticos como con módulos extraídos de certificados reales.
 
 \begin{figure}[H]
     \centering
+    \captionsetup{font=small,skip=2pt}
     \begin{tikzpicture}[
-        block/.style={draw, rounded corners, minimum width=3.2cm, minimum height=1.0cm, align=center},
-        flow/.style={-{Latex[length=2.5mm]}, thick},
-        node distance=1.1cm and 1.35cm,
-        font=\small
+        block/.style={draw, rounded corners, minimum width=3.1cm, minimum height=0.82cm, align=center},
+        flow/.style={-{Latex[length=2.2mm]}, thick},
+        node distance=0.78cm and 1.15cm,
+        font=\footnotesize
     ]
         \node[block] (fuentes) {Fuentes de entrada\\sintéticas o CT};
         \node[block, right=of fuentes] (prep) {Extracción, validación\\y deduplicación};
@@ -301,7 +302,7 @@ La Figura~\ref{fig:modulos_implementacion} resume los módulos funcionales de la
         \draw[flow] (enumeracion) |- (salida);
         \draw[flow] (agregacion) -- (salida);
     \end{tikzpicture}
-    \caption{Módulos funcionales y flujo de datos de la implementación desarrollada. El esquema muestra el recorrido desde las fuentes de entrada, sintéticas o procedentes de CT, hasta la extracción de factores, tiempos y memoria.}
+    \caption{Flujo de la implementación: fuentes sintéticas o CT, preparación de módulos, árbol binario, agregación en \(B\), enumeración final y salida de factores, tiempos y memoria.}
     \label{fig:modulos_implementacion}
 \end{figure}
 
@@ -309,13 +310,13 @@ Para la fase de pruebas del algoritmo, los datos sintéticos se generaron siguie
 
 \section{Preparación de datos de CT-archive}
 
-Además, se ha trabajado con un flujo de preparación de datos reales procedentes de \textit{Certificate Transparency}. El objetivo de esta parte no es únicamente comprobar que el binario puede leer módulos RSA reales, sino construir un conjunto consolidado a partir de los distintos logs disponibles en \textit{ct-archive}, normalizarlo, eliminar duplicados y ejecutar el algoritmo completo sobre esos datos.
+Además, se ha trabajado con un flujo de preparación de datos reales procedentes de \textit{Certificate Transparency}. El objetivo no es únicamente comprobar que el binario puede leer módulos RSA reales, sino construir un conjunto consolidado a partir de los logs disponibles en \textit{ct-archive}, normalizarlo, eliminar duplicados y ejecutar el algoritmo completo sobre esos datos.
 \\
 \\
-Para ello se ha utilizado como fuente de datos el repositorio público \textit{ct-archive}, que recopila volcados de distintos \textit{Certificate Transparency logs} en forma de archivos comprimidos \citep{geomys2026ctarchive}. En lugar de descargar y conservar de manera permanente todos los certificados, el flujo diseñado trabaja de forma incremental: se descarga un archivo comprimido, se inspecciona su contenido, se extraen únicamente las entradas situadas en la carpeta \texttt{issuer/}, y se obtiene de cada certificado X.509 su módulo RSA y su emisor.
+Para ello se ha utilizado el repositorio público \textit{ct-archive}, que recopila volcados de distintos \textit{Certificate Transparency logs} en archivos comprimidos \citep{geomys2026ctarchive}. El flujo trabaja de forma incremental: descarga un ZIP, inspecciona su contenido, extrae las entradas situadas en \texttt{issuer/} y obtiene de cada certificado X.509 su módulo RSA y su emisor.
 \\
 \\
-La elección de \texttt{issuer/} responde a una decisión de alcance y viabilidad. Estos directorios proporcionan certificados de autoridades certificadoras e intermediarias directamente procesables, cuyas claves resultan relevantes porque pueden intervenir en numerosas cadenas de certificación. Además, constituyen un subconjunto considerablemente más manejable que el contenido completo de los logs y permiten conservar la relación entre cada módulo y su emisor. Esta decisión reduce el espacio necesario en disco y permite procesar los logs por partes, manteniendo únicamente los resultados intermedios necesarios para continuar el análisis. No implica, sin embargo, que los certificados hoja carezcan de interés: sus claves RSA también podrían incorporarse a una auditoría más amplia mediante el procesamiento y la decodificación de las entradas completas del log.
+La elección de \texttt{issuer/} responde a una decisión de alcance y viabilidad. Estos directorios proporcionan certificados de autoridades certificadoras e intermediarias directamente procesables, cuyas claves pueden intervenir en numerosas cadenas de certificación. Además, forman un subconjunto más manejable que el contenido completo de los logs y permiten conservar la relación entre cada módulo y su emisor. Los certificados hoja también podrían incorporarse a una auditoría más amplia, pero requerirían procesar las entradas completas del log.
 \\
 \\
 El campo de módulo se extrae mediante OpenSSL y se almacena en formato hexadecimal. El comando empleado intenta primero interpretar cada certificado como DER y, si falla, repite la operación como PEM:
@@ -325,27 +326,28 @@ openssl x509 -inform DER -noout -modulus -issuer -in "$cert" 2>/dev/null \
 || openssl x509 -inform PEM -noout -modulus -issuer -in "$cert" 2>/dev/null
 \end{verbatim}
 
-La opción \texttt{x509} selecciona el procesamiento de certificados X.509; \texttt{-inform} indica su codificación; \texttt{-noout} evita imprimir el certificado completo; \texttt{-modulus} devuelve el módulo de la clave RSA; \texttt{-issuer} muestra el emisor; y \texttt{-in} identifica el fichero de entrada. La salida intermedia conserva pares de la forma \texttt{modulo||issuer}. El emisor no es necesario para ejecutar \textit{batch GCD}, pero permite relacionar un eventual módulo vulnerable con la autoridad certificadora o intermediaria presente en el certificado.
+La opción \texttt{x509} selecciona certificados X.509; \texttt{-inform} indica la codificación; \texttt{-modulus} devuelve el módulo RSA; \texttt{-issuer} muestra el emisor; y \texttt{-in} identifica el fichero de entrada. La salida conserva pares \texttt{modulo||issuer}, lo que permite relacionar un eventual módulo vulnerable con la autoridad certificadora o intermediaria correspondiente.
 \\
 \\
-El proceso incluye una fase de normalización y deduplicación. Muchos certificados pueden contener el mismo módulo RSA, bien por renovaciones, por certificados equivalentes o por presencia repetida en distintos logs. Ejecutar el algoritmo sobre todas esas repeticiones no aporta información criptográfica nueva y aumenta artificialmente el tamaño de entrada. Por ello, antes de lanzar el ataque se genera un archivo final con un único módulo hexadecimal por línea. Este archivo es el que alimenta a la implementación C++.
+El proceso incluye una fase de normalización y deduplicación. Muchos certificados pueden contener el mismo módulo RSA por renovaciones, certificados equivalentes o presencia repetida en distintos logs. Ejecutar el algoritmo sobre esas repeticiones no aporta información criptográfica nueva y aumenta artificialmente el tamaño de entrada. Por ello, antes de lanzar el ataque se genera un archivo final con un único módulo hexadecimal por línea.
 \\
 \\
-Durante la extracción se mantiene también un registro del estado de cada archivo comprimido. Los archivos ya procesados, los que fallan y los que aparentemente no contienen entradas \texttt{issuer/} se registran por separado. Esta distinción es importante porque, en la práctica, un archivo descargado de forma incompleta o un ZIP grande que requiere soporte adecuado para Zip64 puede parecer inválido o no contener las rutas esperadas aunque el problema real sea la descarga o la inspección del archivo. Por este motivo, los casos marcados como ausencia de \texttt{issuer/} se revisan de forma conservadora antes de descartarlos definitivamente.
+Durante la extracción se mantiene también un registro del estado de cada ZIP. Los archivos procesados, los que fallan y los que aparentemente no contienen entradas \texttt{issuer/} se registran por separado, evitando descartar de forma prematura descargas incompletas o archivos que requieren soporte adecuado para Zip64.
 \\
 \\
-La descarga se realiza mediante HTTP con reanudación, en lugar de basarse directamente en los enlaces Torrent disponibles en la misma fuente. La razón es principalmente operativa: el flujo del trabajo necesita controlar cada ZIP de manera independiente, procesarlo, registrar su estado y liberar espacio cuando deja de ser necesario. El uso de Torrent podría ser útil para replicar colecciones completas o como alternativa para recuperar archivos problemáticos, pero resulta menos directo para un procesamiento incremental ZIP a ZIP como el empleado aquí.
+La descarga se realiza mediante HTTP con reanudación, en lugar de basarse directamente en los enlaces Torrent disponibles en la misma fuente. La razón es operativa: el flujo necesita controlar cada ZIP de manera independiente, registrar su estado y liberar espacio cuando deja de ser necesario.
 \\
 \\
-Este paso es importante porque conecta la parte algorítmica con el objetivo aplicado de este trabajo. La implementación no se plantea únicamente como una reproducción de un experimento sintético, sino como la base para ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. En este trabajo, la extracción incremental de módulos desde \textit{CT logs} se consolida finalmente en un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP. La Figura~\ref{fig:pipeline_ct_archive} resume este flujo de extracción, preparación y análisis.
+Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. La extracción incremental desde \textit{CT logs} genera un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP. La Figura~\ref{fig:pipeline_ct_archive} resume el flujo.
 
 \begin{figure}[H]
     \centering
+    \captionsetup{font=small,skip=2pt}
     \begin{tikzpicture}[
-        node distance=0.28cm,
+        node distance=0.12cm,
         flowbox/.style={draw, rounded corners=2pt, align=center,
-            text width=9.1cm, minimum height=0.66cm, font=\footnotesize},
-        flow/.style={-{Latex[length=2.3mm]}, thick}
+            text width=8.5cm, minimum height=0.50cm, font=\scriptsize},
+        flow/.style={-{Latex[length=2.0mm]}, thick}
     ]
         \node[flowbox, fill=blue!9] (archive)
             {\textbf{\textit{ct-archive}}\\Selección de logs y archivos ZIP};
@@ -369,11 +371,8 @@ Este paso es importante porque conecta la parte algorítmica con el objetivo apl
         \draw[flow] (clean) -- (input);
         \draw[flow] (input) -- (audit);
     \end{tikzpicture}
-    \caption{Pipeline de extracción, preparación y análisis de los módulos RSA reales procedentes de \textit{ct-archive}. Los bloques azules representan la selección y descarga de archivos, los verdes la extracción y procesamiento de certificados, el naranja la normalización y deduplicación, y los rojos la entrada final y la auditoría con \textit{Binary Tree Batch GCD}.}
+    \caption{Pipeline de datos reales: azul=descarga, verde=extracción, naranja=normalización y rojo=auditoría.}
     \label{fig:pipeline_ct_archive}
 \end{figure}
 
-Desde el punto de vista de la documentación del trabajo, no consideramos conveniente incluir las celdas completas del notebook ni los listados íntegros del código fuente, ya que eso dificultaría la lectura del documento y rompería el hilo expositivo. En su lugar, en este capítulo nos limitamos a describir la lógica general de la implementación y a comentar las decisiones técnicas más relevantes. Los notebooks, los binarios y los resultados generados se mantienen como material complementario del trabajo.
-\\
-\\
-Por tanto, la implementación desarrollada en este TFM debe entenderse como una traducción práctica del algoritmo \textit{Binary Tree Batch GCD} a un entorno eficiente de ejecución, validada frente a las implementaciones Python de referencia y adaptada tanto a experimentos controlados con datos sintéticos como a módulos RSA reales extraídos de \textit{CT logs}. Sobre esta implementación se apoyan los resultados que presentaremos en el capítulo siguiente.
+En la memoria no se incluyen notebooks ni listados completos para no romper el hilo expositivo. El capítulo recoge la lógica y las decisiones técnicas principales; sobre esta implementación se apoyan los resultados del capítulo siguiente, con datos sintéticos y módulos RSA reales de \textit{CT logs}.

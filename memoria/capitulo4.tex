@@ -313,38 +313,16 @@ Para la fase de pruebas del algoritmo, los datos sintéticos se generaron siguie
 Además, se ha trabajado con un flujo de preparación de datos reales procedentes de \textit{Certificate Transparency}. El objetivo no es únicamente comprobar que el binario puede leer módulos RSA reales, sino construir un conjunto consolidado a partir de los logs disponibles en \textit{ct-archive}, normalizarlo, eliminar duplicados y ejecutar el algoritmo completo sobre esos datos.
 \\
 \\
-Para ello se ha utilizado el repositorio público \textit{ct-archive}, que recopila volcados de distintos \textit{Certificate Transparency logs} en archivos comprimidos \citep{geomys2026ctarchive}. El flujo trabaja de forma incremental: descarga un ZIP, inspecciona su contenido, extrae las entradas situadas en \texttt{issuer/} y obtiene de cada certificado X.509 su módulo RSA y su emisor.
-\\
-\\
-La elección de \texttt{issuer/} responde a una decisión de alcance y viabilidad. Estos directorios proporcionan certificados de autoridades certificadoras e intermediarias directamente procesables, cuyas claves pueden intervenir en numerosas cadenas de certificación. Además, forman un subconjunto más manejable que el contenido completo de los logs y permiten conservar la relación entre cada módulo y su emisor. Los certificados hoja también podrían incorporarse a una auditoría más amplia, pero requerirían procesar las entradas completas del log.
-\\
-\\
-El campo de módulo se extrae mediante OpenSSL y se almacena en formato hexadecimal. El comando empleado intenta primero interpretar cada certificado como DER y, si falla, repite la operación como PEM:
-
-\begin{verbatim}
-openssl x509 -inform DER -noout -modulus -issuer -in "$cert" 2>/dev/null \
-|| openssl x509 -inform PEM -noout -modulus -issuer -in "$cert" 2>/dev/null
-\end{verbatim}
-
-La opción \texttt{x509} selecciona certificados X.509; \texttt{-inform} indica la codificación; \texttt{-modulus} devuelve el módulo RSA; \texttt{-issuer} muestra el emisor; y \texttt{-in} identifica el fichero de entrada. La salida conserva pares \texttt{modulo||issuer}, lo que permite relacionar un eventual módulo vulnerable con la autoridad certificadora o intermediaria correspondiente.
-\\
-\\
-El proceso incluye una fase de normalización y deduplicación. Muchos certificados pueden contener el mismo módulo RSA por renovaciones, certificados equivalentes o presencia repetida en distintos logs. Ejecutar el algoritmo sobre esas repeticiones no aporta información criptográfica nueva y aumenta artificialmente el tamaño de entrada. Por ello, antes de lanzar el ataque se genera un archivo final con un único módulo hexadecimal por línea.
-\\
-\\
-Durante la extracción se mantiene también un registro del estado de cada ZIP. Los archivos procesados, los que fallan y los que aparentemente no contienen entradas \texttt{issuer/} se registran por separado, evitando descartar de forma prematura descargas incompletas o archivos que requieren soporte adecuado para Zip64. La descarga se realiza mediante HTTP con reanudación, en lugar de basarse directamente en los enlaces Torrent disponibles en la misma fuente, porque el flujo necesita controlar cada ZIP de manera independiente, registrar su estado y liberar espacio cuando deja de ser necesario.
-\\
-\\
-Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. La extracción incremental desde \textit{CT logs} genera un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP. La Figura~\ref{fig:pipeline_ct_archive} resume el flujo y sirve de enlace con los resultados del capítulo siguiente.
+La Figura~\ref{fig:pipeline_ct_archive} resume este flujo de preparación y análisis, desde la descarga de archivos hasta la auditoría final con la implementación C++/GMP.
 
 \begin{figure}[H]
     \centering
-    \captionsetup{font=small,skip=8pt}
+    \captionsetup{font=small,skip=3pt}
     \begin{tikzpicture}[
-        node distance=0.34cm,
+        node distance=0.12cm,
         flowbox/.style={draw, rounded corners=2pt, align=center,
-            text width=9.2cm, minimum height=0.75cm, font=\footnotesize},
-        flow/.style={-{Latex[length=2.3mm]}, thick}
+            text width=8.7cm, minimum height=0.50cm, font=\scriptsize},
+        flow/.style={-{Latex[length=2.0mm]}, thick}
     ]
         \node[flowbox, fill=blue!9] (archive)
             {\textbf{\textit{ct-archive}}\\Selección de logs y archivos ZIP};
@@ -371,3 +349,21 @@ Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ej
     \caption{Pipeline de datos reales: azul=descarga, verde=extracción, naranja=normalización y rojo=auditoría.}
     \label{fig:pipeline_ct_archive}
 \end{figure}
+
+Para ello se ha utilizado el repositorio público \textit{ct-archive}, que recopila volcados de distintos \textit{Certificate Transparency logs} en archivos comprimidos \citep{geomys2026ctarchive}. El flujo trabaja de forma incremental: descarga un ZIP, inspecciona su contenido, extrae las entradas situadas en \texttt{issuer/} y obtiene de cada certificado X.509 su módulo RSA y su emisor.
+\\
+\\
+La elección de \texttt{issuer/} responde a una decisión de alcance y viabilidad. Estos directorios proporcionan certificados de autoridades certificadoras e intermediarias directamente procesables, cuyas claves pueden intervenir en numerosas cadenas de certificación. Además, forman un subconjunto más manejable que el contenido completo de los logs y permiten conservar la relación entre cada módulo y su emisor. Los certificados hoja también podrían incorporarse a una auditoría más amplia, pero requerirían procesar las entradas completas del log.
+\\
+\\
+El campo de módulo se extrae mediante OpenSSL y se almacena en formato hexadecimal. El comando empleado intenta primero interpretar cada certificado como DER y, si falla, repite la operación como PEM:
+
+\begin{verbatim}
+openssl x509 -inform DER -noout -modulus -issuer -in "$cert" 2>/dev/null \
+|| openssl x509 -inform PEM -noout -modulus -issuer -in "$cert" 2>/dev/null
+\end{verbatim}
+
+La opción \texttt{x509} selecciona certificados X.509; \texttt{-inform} indica la codificación; \texttt{-modulus} devuelve el módulo RSA; \texttt{-issuer} muestra el emisor; y \texttt{-in} identifica el fichero de entrada. La salida conserva pares \texttt{modulo||issuer}, lo que permite relacionar un eventual módulo vulnerable con la autoridad certificadora o intermediaria correspondiente.
+\\
+\\
+El proceso incluye una fase de normalización y deduplicación. Muchos certificados pueden contener el mismo módulo RSA por renovaciones, certificados equivalentes o presencia repetida en distintos logs. Ejecutar el algoritmo sobre esas repeticiones no aporta información criptográfica nueva y aumenta artificialmente el tamaño de entrada. Por ello, antes de lanzar el ataque se genera un archivo final con un único módulo hexadecimal por línea. Durante la extracción se mantiene también un registro del estado de cada ZIP. Los archivos procesados, los que fallan y los que aparentemente no contienen entradas \texttt{issuer/} se registran por separado, evitando descartar de forma prematura descargas incompletas o archivos que requieren soporte adecuado para Zip64. La descarga se realiza mediante HTTP con reanudación, en lugar de basarse directamente en los enlaces Torrent disponibles en la misma fuente, porque el flujo necesita controlar cada ZIP de manera independiente, registrar su estado y liberar espacio cuando deja de ser necesario. Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. La extracción incremental desde \textit{CT logs} genera un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP y sirve de enlace con los resultados del capítulo siguiente.

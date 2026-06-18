@@ -71,7 +71,7 @@ m \equiv c^d \;(\mathrm{mod}\ N)
 
 En la Figura~\ref{fig:generacion_clave_rsa} describimos los pasos simplificados para la función \textit{KeyGen($\lambda$)}, en este caso el parámetro de seguridad es directamente el tamaño de módulo RSA $N$.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         scale=0.95,
@@ -139,7 +139,7 @@ entonces ambos comparten el factor primo \(p\). En ese caso, basta calcular
 
 para recuperar directamente ese factor común. Una vez conocido, hallar \(q_1\) y \(q_2\) resulta inmediato mediante división y, con ello, también se puede reconstruir la información necesaria para comprometer las claves privadas asociadas, como se ha visto en la sección anterior. Por tanto, dos claves RSA que compartan un factor dejan de ser seguras de forma prácticamente instantánea. La Figura~\ref{fig:factor_compartido} resume esta situación, mostrando cómo la existencia de un factor primo común entre dos módulos RSA permite recuperarlo directamente mediante el cálculo del GCD.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         modulus/.style={draw, rounded corners=2pt, align=center,
@@ -197,7 +197,7 @@ Esta situación puede deberse a varias causas. Entre ellas se encuentran el uso 
 \\
 La Figura~\ref{fig:baja_entropia} resume esta cadena causal, desde una fuente de entropía insuficiente o un generador defectuoso hasta la aparición de módulos RSA vulnerables que pueden factorizarse mediante el cálculo del GCD.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         node distance=0.38cm,
@@ -244,7 +244,7 @@ Antes de explicar su utilidad, conviene recordar brevemente qué papel desempeñ
 \\
 El formato X.509 funciona como estándar de facto para el manejo de certificados en infraestructuras de clave pública. Fue propuesto inicialmente como parte de la serie X.500 de la Unión Internacional de Telecomunicaciones (ITU, por sus siglas en inglés) para la interconexión de sistemas abiertos \citep{ITU1988X500}. De forma simplificada, un certificado X.509 contiene información estructurada como la versión, el número de serie, el identificador del algoritmo de firma, el emisor, el periodo de validez, el sujeto o titular del certificado, la información de clave pública del sujeto y la firma digital del certificado.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         node distance=0.45cm,

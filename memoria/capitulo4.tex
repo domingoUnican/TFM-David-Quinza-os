@@ -46,7 +46,7 @@ A partir de esta limitación surge la necesidad de diseñar métodos que permita
 \\
 Dentro de esta familia de enfoques, el método clásico descrito en la tesis de Våge parte de la construcción de un \textit{product tree} y un \textit{remainder tree}. La idea básica es agrupar los módulos del conjunto de manera jerárquica, multiplicándolos para formar productos intermedios cada vez mayores. Después, mediante el árbol de residuos, se comprueba en las hojas si un determinado módulo comparte algún factor con el producto del resto. De esta forma, el análisis deja de estar planteado como una colección de comparaciones independientes y pasa a organizarse alrededor de operaciones sobre árboles, lo que permite escalar mucho mejor que la enumeración exhaustiva de todos los pares.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \resizebox{0.78\textwidth}{!}{%
     \begin{tikzpicture}[
@@ -136,7 +136,7 @@ El algoritmo consta de tres pasos principales. En primer lugar, se construye un 
 \\
 La Figura~\ref{fig:pseudocodigo_binary_tree} resume la secuencia completa: los productos avanzan por el árbol, los máximos comunes divisores se acumulan en \(B\) y, al alcanzar la raíz, se comprueba cada módulo de entrada.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \begin{minipage}{0.76\textwidth}
 \begin{Verbatim}[fontsize=\footnotesize, frame=single, framesep=2.5mm]
@@ -163,7 +163,7 @@ para cada modulo N_i:
 
 Sea \(N=\{N_1,N_2,\dots,N_M\}\) el conjunto de módulos de entrada. En el nivel inferior se agrupan por parejas y, para cada par \((A,C)\), se calculan simultáneamente \(\gcd(A,C)\) y el producto \(A\cdot C\). El máximo común divisor se incorpora a \(B\), mientras que el producto forma el nodo padre. La misma operación se repite sobre los productos de cada nivel hasta alcanzar la raíz; si un nivel contiene un número impar de nodos, el elemento sin pareja se propaga al siguiente sin modificar.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \resizebox{0.94\textwidth}{!}{%
     \begin{tikzpicture}[
@@ -277,7 +277,7 @@ La tercera fase corresponde a la enumeración final sobre el conjunto original d
 \\
 La Figura~\ref{fig:modulos_implementacion} resume los módulos funcionales de la implementación y el recorrido de los datos. La separación entre preparación, núcleo algorítmico y resultados permite utilizar la misma implementación tanto con conjuntos sintéticos como con módulos extraídos de certificados reales.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         block/.style={draw, rounded corners, minimum width=3.2cm, minimum height=1.0cm, align=center},
@@ -338,7 +338,7 @@ La descarga se realiza mediante HTTP con reanudación, en lugar de basarse direc
 \\
 Este paso es importante porque conecta la parte algorítmica con el objetivo aplicado de este trabajo. La implementación no se plantea únicamente como una reproducción de un experimento sintético, sino como la base para ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. En este trabajo, la extracción incremental de módulos desde \textit{CT logs} se consolida finalmente en un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP. La Figura~\ref{fig:pipeline_ct_archive} resume este flujo de extracción, preparación y análisis.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         node distance=0.28cm,

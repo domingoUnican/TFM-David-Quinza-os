@@ -332,22 +332,19 @@ La opción \texttt{x509} selecciona certificados X.509; \texttt{-inform} indica 
 El proceso incluye una fase de normalización y deduplicación. Muchos certificados pueden contener el mismo módulo RSA por renovaciones, certificados equivalentes o presencia repetida en distintos logs. Ejecutar el algoritmo sobre esas repeticiones no aporta información criptográfica nueva y aumenta artificialmente el tamaño de entrada. Por ello, antes de lanzar el ataque se genera un archivo final con un único módulo hexadecimal por línea.
 \\
 \\
-Durante la extracción se mantiene también un registro del estado de cada ZIP. Los archivos procesados, los que fallan y los que aparentemente no contienen entradas \texttt{issuer/} se registran por separado, evitando descartar de forma prematura descargas incompletas o archivos que requieren soporte adecuado para Zip64.
-\\
-\\
-La descarga se realiza mediante HTTP con reanudación, en lugar de basarse directamente en los enlaces Torrent disponibles en la misma fuente. La razón es operativa: el flujo necesita controlar cada ZIP de manera independiente, registrar su estado y liberar espacio cuando deja de ser necesario.
+Durante la extracción se mantiene también un registro del estado de cada ZIP. Los archivos procesados, los que fallan y los que aparentemente no contienen entradas \texttt{issuer/} se registran por separado, evitando descartar de forma prematura descargas incompletas o archivos que requieren soporte adecuado para Zip64. La descarga se realiza mediante HTTP con reanudación, en lugar de basarse directamente en los enlaces Torrent disponibles en la misma fuente, porque el flujo necesita controlar cada ZIP de manera independiente, registrar su estado y liberar espacio cuando deja de ser necesario.
 \\
 \\
 Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ejecutar el ataque \textit{all-to-all GCD} sobre certificados reales. La extracción incremental desde \textit{CT logs} genera un conjunto deduplicado de módulos RSA que se analiza con la implementación C++/GMP. La Figura~\ref{fig:pipeline_ct_archive} resume el flujo.
 
 \begin{figure}[H]
     \centering
-    \captionsetup{font=small,skip=2pt}
+    \captionsetup{font=small,skip=8pt}
     \begin{tikzpicture}[
-        node distance=0.12cm,
+        node distance=0.34cm,
         flowbox/.style={draw, rounded corners=2pt, align=center,
-            text width=8.5cm, minimum height=0.50cm, font=\scriptsize},
-        flow/.style={-{Latex[length=2.0mm]}, thick}
+            text width=9.2cm, minimum height=0.75cm, font=\footnotesize},
+        flow/.style={-{Latex[length=2.3mm]}, thick}
     ]
         \node[flowbox, fill=blue!9] (archive)
             {\textbf{\textit{ct-archive}}\\Selección de logs y archivos ZIP};
@@ -375,4 +372,5 @@ Este paso conecta la parte algorítmica con el objetivo aplicado del trabajo: ej
     \label{fig:pipeline_ct_archive}
 \end{figure}
 
+\clearpage
 En la memoria no se incluyen notebooks ni listados completos para no romper el hilo expositivo. El capítulo recoge la lógica y las decisiones técnicas principales; sobre esta implementación se apoyan los resultados del capítulo siguiente, con datos sintéticos y módulos RSA reales de \textit{CT logs}.

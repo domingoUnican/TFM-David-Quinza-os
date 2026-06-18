@@ -82,18 +82,18 @@ configuración.
 Antes de analizar los tiempos de ejecución, se comprobó que los tres algoritmos identificaban los mismos módulos vulnerables en cada configuración experimental. Esta validación es importante porque la implementación C++ no solo debe ser más rápida, sino también producir resultados compatibles con las implementaciones Python de referencia.
 \\
 \\
-Los resultados fueron consistentes en todas las combinaciones evaluadas: para cada conjunto sintético, los tres algoritmos detectaron exactamente el mismo número de módulos con factores compartidos. Por ejemplo, para \(\texttt{WEAK}=2\) se detectaron 4 módulos vulnerables; para \(\texttt{WEAK}=100\), los valores estuvieron alrededor de 200; y para \(\texttt{WEAK}=1000\), los valores oscilaron entre 1747 y 1970 según el tamaño total del conjunto. Adicionalmente, para cada factor \(p\) recuperado se comprobó que efectivamente divide al módulo correspondiente (\(N \bmod p = 0\)) y que el cofactor \(N/p\) es un entero mayor que uno, lo que confirma que los resultados son factorizaciones válidas y no artefactos del cálculo.
+Los resultados fueron consistentes en todas las combinaciones evaluadas: para cada conjunto sintético, los tres algoritmos detectaron exactamente el mismo número de módulos con factores compartidos. Por ejemplo, para \(\texttt{WEAK}=2\) se detectaron 4 módulos vulnerables; para \(\texttt{WEAK}=100\), los valores estuvieron alrededor de 200; y para \(\texttt{WEAK}=1000\), oscilaron entre 1747 y 1970 según el tamaño del conjunto. Además, para cada factor \(p\) recuperado se comprobó que dividía al módulo correspondiente (\(N \bmod p = 0\)) y que el cofactor \(N/p\) era un entero mayor que uno.
 \\
 \\
-Conviene aclarar que el número de módulos vulnerables detectados no tiene por qué coincidir exactamente con el parámetro \(\texttt{WEAK}\). La función de generación utilizada por el repositorio original introduce nuevos módulos que comparten un factor con módulos ya existentes. Por tanto, al detectar vulnerabilidades aparecen tanto los módulos añadidos como los módulos originales con los que comparten factor. Además, cuando un mismo módulo original contiene dos factores que han sido reutilizados en módulos débiles distintos, el número total de módulos vulnerables puede ser menor que \(2 \cdot \texttt{WEAK}\). Lo relevante para nuestra validación es que las tres implementaciones coincidieron exactamente en todos los casos.
+El número de módulos vulnerables detectados no tiene por qué coincidir exactamente con \(\texttt{WEAK}\), ya que la función de generación introduce módulos que comparten un factor con otros ya existentes. Por tanto, aparecen tanto los módulos añadidos como los originales con los que comparten factor. Lo relevante para la validación es que las tres implementaciones coincidieron exactamente en todos los casos.
 
 \section{Comparación de tiempos de ejecución}
 
-La Figura~\ref{fig:tiempo_pelofske_extendida} muestra los tiempos de ejecución de los tres algoritmos. La figura se organiza de forma análoga al experimento de Pelofske: las filas distinguen el tamaño del módulo RSA y las columnas representan los distintos valores de \(\texttt{WEAK}\). La escala del eje vertical es logarítmica, ya que las diferencias entre la implementación C++ y las implementaciones Python son demasiado grandes para apreciarse correctamente en una escala lineal.
+La Figura~\ref{fig:tiempo_pelofske_extendida} muestra los tiempos de ejecución de los tres algoritmos. Como en el experimento de Pelofske, las filas distinguen el tamaño del módulo RSA y las columnas representan los valores de \(\texttt{WEAK}\). La escala vertical es logarítmica para apreciar mejor las diferencias entre la implementación C++ y las versiones Python.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.82\textwidth]{\figpath{comparativa_tiempo_pelofske_extendida.pdf}}
+    \includegraphics[width=0.9\textwidth]{\figpath{comparativa_tiempo_pelofske_extendida.pdf}}
     \caption{Comparación del tiempo de ejecución de los tres algoritmos evaluados sobre datos sintéticos: \textit{Remainder Tree Batch GCD} en Python, \textit{Binary Tree Batch GCD} en Python y \textit{Binary Tree Batch GCD} en C++/GMP.}
     \label{fig:tiempo_pelofske_extendida}
 \end{figure}
